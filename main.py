@@ -1,42 +1,14 @@
 import librosa
-import numpy as np
-from scipy.io import wavfile
-from oscillators.sine import SineOscillator
-from oscillators.square import SquareOscillator
-from oscillators.sawtooth import SawtoothOscillator
 from oscillators.triangle import TriangleOscillator
-from waveform import WaveAdder
+from oscillators.modulated_oscilator import ModulatedOscillator
+from modulators.panner import Panner
+from modulators.volume import ModulatedVolume
+from modulators.adsr_envelope import ADSREnvelope
+from wave_adder import WaveAdder
+from chain import Chain
+from file import wave_to_file
 
 SR = 44_100
-
-
-def get_val(osc, sample_rate=SR):
-    return [next(osc) for i in range(sample_rate)]
-
-
-def get_seq(osc, notes=["C4", "E4", "G4"], note_lens=[0.5, 0.5, 0.5]):
-    samples = []
-    osc = iter(osc)
-    for note, note_len in zip(notes, note_lens):
-        osc.freq = librosa.note_to_hz(note)
-        for _ in range(int(SR * note_len)):
-            samples.append(next(osc))
-    return samples
-
-
-def to_16(wav, amp):
-    return np.int16(wav * amp * (2**15 - 1))
-
-
-def wave_to_file(wav, wav2=None, fname="temp.wav", amp=0.1):
-    wav = np.array(wav)
-    wav = to_16(wav, amp)
-    if wav2 is not None:
-        wav2 = np.array(wav2)
-        wav2 = to_16(wav2, amp)
-        wav = np.stack([wav, wav2]).T
-
-    wavfile.write(fname, SR, wav)
 
 
 def get_chord(key):
@@ -52,29 +24,59 @@ def get_chord(key):
     return chords[key]
 
 
-def make_song(keys, osc=TriangleOscillator(), note_lens=[1]):
-    s1 = []
-    s2 = []
-    s3 = []
+def get_val(osc, count=SR, it=False):
+    if it:
+        osc = iter(osc)
+    # returns 1 sec of samples of given osc.
+    return [next(osc) for i in range(count)]
 
-    for key in keys:
-        chord = get_chord(key)
-        s1.append(chord[0])
-        s2.append(chord[1])
-        s3.append(chord[2])
 
-    return (
-        np.array(get_seq(osc, notes=s1, note_lens=note_lens))
-        + np.array(get_seq(osc, notes=s2, note_lens=note_lens))
-        + np.array(get_seq(osc, notes=s3, note_lens=note_lens))
+def make_chord_key(key, osc=TriangleOscillator):
+    chord = get_chord(key)
+    gen = WaveAdder(
+        Chain(
+            ModulatedOscillator(osc(librosa.note_to_hz(chord[0]))),
+            ModulatedVolume(ADSREnvelope(0.5, 0.2, 0.7, 0.5)),
+            Panner(0.3),
+        ),
+        Chain(
+            ModulatedOscillator(osc(librosa.note_to_hz(chord[1]))),
+            Panner(0.5),
+            ModulatedVolume(ADSREnvelope(0.5, 0.2, 0.7, 0.5)),
+        ),
+        Chain(
+            ModulatedOscillator(osc(librosa.note_to_hz(chord[2]))),
+            Panner(0.7),
+            ModulatedVolume(ADSREnvelope(0.5, 0.2, 0.7, 0.5)),
+        ),
+        stereo=True,
     )
 
+    return gen
+
+
+def make_sound(keys, osc=TriangleOscillator, note_lens=[1]):
+    notes = []
+    for key, note_len in zip(keys, note_lens):
+        notes += gettrig(make_chord_key(key, osc=osc), note_len)
+
+    return notes
+
+
+def gettrig(gen, downtime, sample_rate=SR):
+    gen = iter(gen)
+    down = int(downtime * sample_rate)
+    vals = get_val(gen, down)
+    gen.trigger_release()
+    while not gen.ended:
+        vals.append(next(gen))
+    return vals
+
+
+# --------------------------
 
 notes = [2, 0, 1, 3, 5, 4, 0]
 note_lens = [0.25, 0.25, 0.30, 0.40, 1, 1.25, 1]
 
-wav = make_song(
-    notes, osc=TriangleOscillator(amp=0.5), note_lens=note_lens
-) + make_song(notes, osc=SineOscillator(), note_lens=note_lens)
-
+wav = make_sound(notes, note_lens=note_lens)
 wave_to_file(wav, None, fname="./sounds/test.wav")

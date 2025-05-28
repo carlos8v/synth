@@ -5,8 +5,8 @@ Criar um sintetizador simples utilizando python.
 ### Metas
 
 - [x] Gerar sons
+- [x] Adicionar moduladores
 - [ ] Mapear botões a notas
-- [ ] Adicionar moduladores
 
 ### CheatSheet
 
