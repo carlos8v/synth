@@ -1,0 +1,12 @@
+# Projeto
+
+Criar um sintetizador simples utilizando python.
+
+### Metas
+
+- [x] Gerar sons
+- [ ] Mapear botões a notas
+- [ ] Adicionar moduladores
+
+### Referências
+- [Making A Synth With Python — Oscillators](https://python.plainenglish.io/making-a-synth-with-python-oscillators-2cb8e68e9c3b)
