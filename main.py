@@ -39,39 +39,42 @@ def wave_to_file(wav, wav2=None, fname="temp.wav", amp=0.1):
     wavfile.write(fname, SR, wav)
 
 
-# Testing generating sounds
-# wav = get_seq(SineOscillator())
-# wave_to_file(wav, fname="./sounds/c4_maj_sine.wav")
+def get_chord(key):
+    chords = [
+        ["C4", "E4", "G4"],
+        ["D4", "F4", "A4"],
+        ["E4", "G4", "B4"],
+        ["F4", "A4", "C5"],
+        ["G4", "B4", "D5"],
+        ["A4", "C5", "E5"],
+        ["B4", "D5", "F5"],
+    ]
+    return chords[key]
 
-# wav = get_seq(SquareOscillator())
-# wave_to_file(wav, fname="./sounds/c4_maj_square.wav")
 
-# wav = get_seq(SawtoothOscillator())
-# wave_to_file(wav, fname="./sounds/c4_maj_saw.wav")
+def make_song(keys, osc=TriangleOscillator(), note_lens=[1]):
+    s1 = []
+    s2 = []
+    s3 = []
 
-# wav = get_seq(TriangleOscillator())
-# wave_to_file(wav, fname="./sounds/c4_maj_triangle.wav")
+    for key in keys:
+        chord = get_chord(key)
+        s1.append(chord[0])
+        s2.append(chord[1])
+        s3.append(chord[2])
 
-dur = 4
-s1 = ["C4", "E4", "G4", "B4"] * dur
-l1 = [0.25, 0.25, 0.25, 0.25] * dur
+    return (
+        np.array(get_seq(osc, notes=s1, note_lens=note_lens))
+        + np.array(get_seq(osc, notes=s2, note_lens=note_lens))
+        + np.array(get_seq(osc, notes=s3, note_lens=note_lens))
+    )
 
-s2 = ["C3", "E3", "G3"] * dur
-l2 = [0.333334, 0.333334, 0.333334] * dur
 
-s3 = ["C2", "G2"] * dur
-l3 = [0.5, 0.5] * dur
+notes = [2, 0, 1, 3, 5, 4, 0]
+note_lens = [0.25, 0.25, 0.30, 0.40, 1, 1.25, 1]
 
-wavl = (
-    np.array(get_seq(TriangleOscillator(amp=0.8), notes=s1, note_lens=l1))
-    + np.array(get_seq(SineOscillator(), notes=s2, note_lens=l2))
-    + np.array(get_seq(TriangleOscillator(amp=0.4), notes=s3, note_lens=l3))
-)
+wav = make_song(
+    notes, osc=TriangleOscillator(amp=0.5), note_lens=note_lens
+) + make_song(notes, osc=SineOscillator(), note_lens=note_lens)
 
-wavr = (
-    np.array(get_seq(TriangleOscillator(amp=0.8), notes=s1[::-1], note_lens=l1))
-    + np.array(get_seq(SineOscillator(), notes=s2[::-1], note_lens=l2))
-    + np.array(get_seq(TriangleOscillator(amp=0.4), notes=s3[::-1], note_lens=l3))
-)
-
-wave_to_file(wavl, wavr, fname="./sounds/c_maj7.wav")
+wave_to_file(wav, None, fname="./sounds/test.wav")

@@ -8,5 +8,16 @@ Criar um sintetizador simples utilizando python.
 - [ ] Mapear botões a notas
 - [ ] Adicionar moduladores
 
+### CheatSheet
+
+Primeira escala:
+1. Cmaj -> (C, E, G)
+2. Dmin -> (D, F, A)
+3. Emin -> (E, G, B)
+4. Fmaj -> (F, A, C)
+5. Gmaj -> (G, B, D)
+6. Amin -> (A, C, E)
+7. Bdim -> (B, D, F)
+
 ### Referências
 - [Making A Synth With Python — Oscillators](https://python.plainenglish.io/making-a-synth-with-python-oscillators-2cb8e68e9c3b)
