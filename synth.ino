@@ -27,11 +27,6 @@ maxiOsc osc[4];
 maxiOsc oscOne, oscTwo, oscThree, oscFour, counter;
 maxiEnv envelope;
 
-/*
- * Major progression:
- * I - ii - iii - IV - V - vi
- */
-
 double notesFreq[][3] = {
   { 164.81, 207.65, 246.94 }, // Emaj   (E3 - G#3 - B3)
   { 184.99, 220.00, 277.18 }, // F#min  (F#3 - A3 - C#4)
