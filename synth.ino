@@ -1,5 +1,6 @@
 #include "AudioTools.h"
 #include "AudioTools/AudioLibs/MaximilianDSP.h"
+#include "notes.h"
 
 I2SStream out;
 Maximilian maximilian(out);
@@ -24,18 +25,10 @@ maxiClock myClock;
 maxiFilter filter;
 
 maxiOsc osc[4];
-maxiOsc oscOne, oscTwo, oscThree, oscFour, counter;
 maxiEnv envelope;
 
-double notesFreq[][3] = {
-  { 164.81, 207.65, 246.94 }, // Emaj   (E3 - G#3 - B3)
-  { 184.99, 220.00, 277.18 }, // F#min  (F#3 - A3 - C#4)
-  { 207.65, 246.94, 277.18 }, // G#min  (G#3 - B3 - C#4)
-  { 220.00, 277.18, 329.63 }, // Amaj   (A3 - C#4 - E4)
-  { 246.94, 311.13, 369.99 }, // Bmaj   (B3 - D#4 - F#4)
-  { 277.18, 329.63, 415.30 }, // C#min  (C#4 - E4 - G#4)
-  { 329.63, 415.30, 493.88 }, // Emaj   (E4 - G#4 - B4)
-};
+// For DEBUG
+Note ** currentScale = e_major_scale;
 
 void setup() {
   Serial.begin(115200);
@@ -48,7 +41,7 @@ void setup() {
   pinMode(buttonPin6, INPUT_PULLUP);
   pinMode(buttonPin7, INPUT_PULLUP);
 
-  myClock.setTicksPerBeat(3);
+  myClock.setTicksPerBeat(4);
   myClock.setTempo(100);
 
   envelope.setAttack(0);
@@ -66,20 +59,24 @@ void setup() {
 
   out.begin(cfg);
   maximilian.begin(cfg);
+
+  // Initialize notes references
+  setupNotes();
 }
 
-void playArpeggio(float *output, double noteFreq[], int currentNote) {
-  double note = osc[currentNote].sawn(noteFreq[currentNote]);
-  double filtered = filter.lores(note, 1000, 0.8);  // Low-pass filter
-  output[0] = output[1] = filtered;  
+void playArpeggio(float *output, Note *note, int currentNote) {
+  double single = osc[currentNote].sawn(note->frequencies[currentNote]);
+  double filtered = filter.lores(single, 1000, 0.8);  // Low-pass filter
+  output[0] = output[1] = filtered;
 }
 
-void playNote(float *output, double noteFreq[]) {
-  double chord = ((
-    oscOne.sawn(noteFreq[0]) +
-    oscTwo.sawn(noteFreq[1]) +
-    oscThree.sawn(noteFreq[2])
-  ) / 3.0);
+void playNote(float *output, Note *note) {
+  double chord;
+
+  for (int i = 0; i < note->keys; i++) {
+    chord += osc[i].sawn(note->frequencies[i]);
+  }
+  chord /= note->keys;
 
   double filtered = filter.lores(chord, 1000, 0.8);
   output[0] = output[1] = chord;
@@ -121,7 +118,7 @@ void play(float *output) {
 
   // Sustain key
   if (lastNoteIdx >= 0) {
-    playNote(output, notesFreq[lastNoteIdx]);
+    playNote(output, currentScale[lastNoteIdx]);
   }
 }
 

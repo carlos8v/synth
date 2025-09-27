@@ -2,11 +2,11 @@
 #define NOTES
 
 #include <string>
-#include <stdio.h>
-#include <stdlib.h>
+#include <cstring>
+#include <initializer_list>
 
 typedef struct Note {
-  std::string note;
+  char note[10];
   int keys;
   double frequencies[4];
 
@@ -15,7 +15,7 @@ typedef struct Note {
 } Note;
 
 void setupNotes();
-Note * makeNote(std::string note, int keys, double frequencies[]);
+Note * makeNote(std::string note, int keys, std::initializer_list<double> frequencies);
 
 extern Note *e_major_scale[];
 
