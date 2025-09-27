@@ -15,7 +15,7 @@ typedef struct Note {
 } Note;
 
 void setupNotes();
-Note * makeNote(std::string note, int keys, std::initializer_list<double> frequencies);
+Note * makeNote(std::string note, std::initializer_list<double> frequencies);
 
 extern Note *e_major_scale[];
 
