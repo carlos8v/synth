@@ -10,13 +10,13 @@ Note *e_major_scale[7];
 Note *makeNote(std::string note, std::initializer_list<double> frequencies) {
   Note *newNote = (Note *)malloc(sizeof(Note));
 
-  int i = 0;
+  int keys = 0;
   for (double freq : frequencies) {
-    newNote->frequencies[i] = freq;
-    i++;
+    newNote->frequencies[keys] = freq;
+    keys++;
   }
 
-  newNote->keys = i + 1;
+  newNote->keys = keys;
   strcpy(newNote->note, note.c_str());
 
   return newNote;
