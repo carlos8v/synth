@@ -1,17 +1,10 @@
 #include "AudioTools.h"
 #include "AudioTools/AudioLibs/MaximilianDSP.h"
+#include "config.h"
 #include "notes.h"
 
 I2SStream out;
 Maximilian maximilian(out);
-
-const int buttonPin1 = 33;
-const int buttonPin2 = 14;
-const int buttonPin3 = 32;
-const int buttonPin4 = 12;
-const int buttonPin5 = 19;
-const int buttonPin6 = 13;
-const int buttonPin7 = 21;
 
 int keyNotes[] = { 0, 0, 0, 0, 0, 0, 0 };
 int lastNoteIdx = -1;
@@ -28,18 +21,18 @@ maxiOsc osc[4];
 maxiEnv envelope;
 
 // For DEBUG
-Note ** currentScale = e_major_scale;
+Note **currentScale = e_major_scale;
 
 void setup() {
   Serial.begin(115200);
 
-  pinMode(buttonPin1, INPUT_PULLUP);
-  pinMode(buttonPin2, INPUT_PULLUP);
-  pinMode(buttonPin3, INPUT_PULLUP);
-  pinMode(buttonPin4, INPUT_PULLUP);
-  pinMode(buttonPin5, INPUT_PULLUP);
-  pinMode(buttonPin6, INPUT_PULLUP);
-  pinMode(buttonPin7, INPUT_PULLUP);
+  pinMode(KEY_1_PIN, INPUT_PULLUP);
+  pinMode(KEY_2_PIN, INPUT_PULLUP);
+  pinMode(KEY_3_PIN, INPUT_PULLUP);
+  pinMode(KEY_4_PIN, INPUT_PULLUP);
+  pinMode(KEY_5_PIN, INPUT_PULLUP);
+  pinMode(KEY_6_PIN, INPUT_PULLUP);
+  pinMode(KEY_7_PIN, INPUT_PULLUP);
 
   myClock.setTicksPerBeat(4);
   myClock.setTempo(100);
@@ -50,10 +43,10 @@ void setup() {
   envelope.setRelease(1000);
 
   auto cfg = out.defaultConfig(TX_MODE);
-  cfg.is_master = true; // ESP32 generates the clock
-  cfg.pin_bck = 26;     // Bit Clock (BCK)
-  cfg.pin_ws = 25;      // Word Select / LRCK
-  cfg.pin_data = 27;
+  cfg.is_master = true;       // ESP32 generates the clock
+  cfg.pin_bck = I2S_BCK_PIN;  // Bit Clock (BCK)
+  cfg.pin_ws = I2S_WS_PIN;    // Word Select / LRCK
+  cfg.pin_data = I2S_DATA_PIN;
   cfg.sample_rate = 32000;
   cfg.buffer_size = 512;
 
@@ -93,7 +86,7 @@ void play(float *output) {
   int pressedIdx = -1;
   for (int idx = 0; idx < 7; idx++) {
     if (keyNotes[idx]) {
-      pressedIdx  = idx;
+      pressedIdx = idx;
       break;
     }
   }
@@ -105,7 +98,7 @@ void play(float *output) {
       keyReleased = 0;
       lastNoteIdx = pressedIdx;
 
-    // Unplay note
+      // Unplay note
     } else if (lastNoteIdx == pressedIdx) {
       lastNoteIdx = -1;
       keyReleased = 0;
@@ -122,14 +115,18 @@ void play(float *output) {
   }
 }
 
-void loop() {
-  maximilian.copy(); // Call the audio processing callback
+void checkKeyPress() {
+  keyNotes[0] = !digitalRead(KEY_1_PIN);
+  keyNotes[1] = !digitalRead(KEY_2_PIN);
+  keyNotes[2] = !digitalRead(KEY_3_PIN);
+  keyNotes[3] = !digitalRead(KEY_4_PIN);
+  keyNotes[4] = !digitalRead(KEY_5_PIN);
+  keyNotes[5] = !digitalRead(KEY_6_PIN);
+  keyNotes[6] = !digitalRead(KEY_7_PIN);
+}
 
-  keyNotes[0] = !digitalRead(buttonPin1);
-  keyNotes[1] = !digitalRead(buttonPin2);
-  keyNotes[2] = !digitalRead(buttonPin3);
-  keyNotes[3] = !digitalRead(buttonPin4);
-  keyNotes[4] = !digitalRead(buttonPin5);
-  keyNotes[5] = !digitalRead(buttonPin6);
-  keyNotes[6] = !digitalRead(buttonPin7);
+void loop() {
+  maximilian.copy();  // Call the audio processing callback
+
+  checkKeyPress();
 }
