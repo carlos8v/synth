@@ -6,10 +6,19 @@
 I2SStream out;
 Maximilian maximilian(out);
 
-int keyNotes[] = { 0, 0, 0, 0, 0, 0, 0 };
+int keyNotes[] = {0, 0, 0, 0, 0, 0, 0};
+
 int lastNoteIdx = -1;
-int keyReleased = 0;
 int currentNote = 0;
+int keyReleased = 0;
+
+enum KeyModifier {
+  Base = 0,
+  MajorMinor = 1,
+  Major7Minor7 = 2,
+};
+int lastKeyModifier = KeyModifier::Base;
+int keyModifier = KeyModifier::Base;
 
 // Current note index for sequencing
 int currentCount;
@@ -93,15 +102,18 @@ void play(float *output) {
 
   // Can process key press
   if (keyReleased && pressedIdx >= 0) {
-    // First note to play or switch note
-    if (lastNoteIdx < 0 || lastNoteIdx != pressedIdx) {
+    // First note to play, key change, modifier change
+    if (lastNoteIdx < 0 || lastNoteIdx != pressedIdx ||
+        lastKeyModifier != keyModifier) {
       keyReleased = 0;
       lastNoteIdx = pressedIdx;
+      lastKeyModifier = keyModifier;
 
       // Unplay note
     } else if (lastNoteIdx == pressedIdx) {
       lastNoteIdx = -1;
       keyReleased = 0;
+      lastKeyModifier = KeyModifier::Base;
     }
   }
 
@@ -111,7 +123,28 @@ void play(float *output) {
 
   // Sustain key
   if (lastNoteIdx >= 0) {
-    playNote(output, currentScale[lastNoteIdx]);
+    Note *noteToPlay;
+
+    switch (lastKeyModifier) {
+      case KeyModifier::Base:
+        noteToPlay = currentScale[lastNoteIdx];
+        break;
+      case KeyModifier::MajorMinor:
+        noteToPlay = currentScale[lastNoteIdx]->major_minor != NULL
+                         ? currentScale[lastNoteIdx]->major_minor
+                         : currentScale[lastNoteIdx];
+        break;
+      case KeyModifier::Major7Minor7:
+        noteToPlay = currentScale[lastNoteIdx]->major7_minor7 != NULL
+                         ? currentScale[lastNoteIdx]->major7_minor7
+                         : currentScale[lastNoteIdx];
+        break;
+      default:
+        noteToPlay = currentScale[lastNoteIdx];
+        break;
+    }
+
+    playNote(output, noteToPlay);
   }
 }
 
@@ -125,8 +158,25 @@ void checkKeyPress() {
   keyNotes[6] = !digitalRead(KEY_7_PIN);
 }
 
+void checkModifier() {
+  int yValue = analogRead(MOD_PIN_Y);
+  int yPercent = map(yValue, 0, 4095, 0, 100);
+
+  // Neutral position
+  if (yPercent >= 40 && yPercent <= 60) {
+    keyModifier = KeyModifier::Base;
+    // Upward position
+  } else if (yPercent >= 60) {
+    keyModifier = KeyModifier::MajorMinor;
+    // keyModifier position
+  } else if (yPercent <= 40) {
+    keyModifier = KeyModifier::Major7Minor7;
+  }
+}
+
 void loop() {
   maximilian.copy();  // Call the audio processing callback
 
+  checkModifier();
   checkKeyPress();
 }

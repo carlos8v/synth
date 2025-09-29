@@ -13,4 +13,6 @@
 #define KEY_6_PIN 4
 #define KEY_7_PIN 21
 
+#define MOD_PIN_Y 34
+
 #endif

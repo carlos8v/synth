@@ -19,6 +19,9 @@ Note *makeNote(std::string note, std::initializer_list<double> frequencies) {
   newNote->keys = keys;
   strcpy(newNote->note, note.c_str());
 
+  newNote->major_minor = NULL;
+  newNote->major7_minor7 = NULL;
+
   return newNote;
 }
 
@@ -74,18 +77,26 @@ void setupNotes() {
   Note *b_min7 = makeNote("Bmin7", {246.94, 293.66, 369.99, 440.00});
 
   // C chords
-  // C#maj  (C#4 - F4 - G#4)
+  // C#maj  (C#4 - G4 - G#4)
   Note *c_sharp_maj = makeNote("C#maj", {277.18, 349.23, 415.30});
-  // C#maj7 (C#4 - F4 - G#4 - C5)
+  // C#maj7 (C#4 - G4 - G#4 - C#5)
   Note *c_sharp_maj7 = makeNote("C#maj7", {277.18, 349.24, 415.30, 523.25});
   // C#min  (C#4 - E4 - G#4)
   Note *c_sharp_min = makeNote("C#min", {277.18, 329.63, 415.30});
-  // C#min7 (C#4 - F4 - G#4 - B4)
+  // C#min7 (C#4 - F4 - G#4 - B5)
   Note *c_sharp_min7 = makeNote("C#min7", {277.18, 329.63, 415.30, 493.88});
 
   // D chords
-  // Ddim   (D#4 - F#4 - A4)
-  Note *d_dim = makeNote("Ddim", {311.14, 369.99, 440.00});
+  // D#maj   (D#4 - G4 - A#4)
+  Note *d_sharp_maj = makeNote("D#maj", {311.14, 392.00, 466.16});
+  // D#maj7   (D#4 - G4 - A#4 - D5)
+  Note *d_sharp_maj7 = makeNote("D#maj7", {311.14, 392.00, 466.16, 554.37});
+  // D#min   (D#4 - F#4 - A#4)
+  Note *d_sharp_min = makeNote("D#min", {311.14, 369.99, 466.16});
+  // D#min7   (D#4 - F#4 - A#4 - C#5)
+  Note *d_sharp_min7 = makeNote("D#min7", {311.14, 369.99, 466.16, 554.37});
+  // D#dim   (D#4 - F#4 - A4)
+  Note *d_sharp_dim = makeNote("D#dim", {311.14, 369.99, 440.00});
 
   // Initialize chords relations
   e_maj->major_minor = e_min;
@@ -118,6 +129,11 @@ void setupNotes() {
   c_sharp_maj->major7_minor7 = c_sharp_min7;
   c_sharp_min->major7_minor7 = c_sharp_maj7;
 
+  d_sharp_maj->major_minor = d_sharp_min;
+  d_sharp_min->major_minor = d_sharp_maj;
+  d_sharp_maj->major7_minor7 = d_sharp_min7;
+  d_sharp_min->major7_minor7 = d_sharp_maj7;
+
   // Initialize scales
   e_major_scale[0] = e_maj;
   e_major_scale[1] = f_sharp_min;
@@ -125,5 +141,5 @@ void setupNotes() {
   e_major_scale[3] = a_maj;
   e_major_scale[4] = b_maj;
   e_major_scale[5] = c_sharp_min;
-  e_major_scale[6] = d_dim;
+  e_major_scale[6] = d_sharp_dim;
 }
