@@ -1,14 +1,14 @@
 #include "AudioTools.h"
 #include "AudioTools/AudioLibs/MaximilianDSP.h"
+#include "chords.h"
 #include "config.h"
-#include "notes.h"
 
 I2SStream out;
 Maximilian maximilian(out);
 
 int keyNotes[] = {0, 0, 0, 0, 0, 0, 0};
 
-int lastNoteIdx = -1;
+int lastChordIdx = -1;
 int currentNote = 0;
 int keyReleased = 0;
 
@@ -30,7 +30,7 @@ maxiOsc osc[4];
 maxiEnv envelope;
 
 // For DEBUG
-Note **currentScale = e_major_scale;
+Chord **currentScale = e_major_scale;
 
 void setup() {
   Serial.begin(115200);
@@ -62,26 +62,27 @@ void setup() {
   out.begin(cfg);
   maximilian.begin(cfg);
 
-  // Initialize notes references
-  setupNotes();
+  // Initialize chords references
+  setupChords();
 }
 
-void playArpeggio(float *output, Note *note, int currentNote) {
-  double single = osc[currentNote].sawn(note->frequencies[currentNote]);
+void playArpeggio(float *output, Chord *chord, int currentNote) {
+  double single = osc[currentNote].sawn(chord->frequencies[currentNote]);
   double filtered = filter.lores(single, 1000, 0.8);  // Low-pass filter
   output[0] = output[1] = filtered;
 }
 
-void playNote(float *output, Note *note) {
-  double chord;
+void playChord(float *output, Chord *chord) {
+  double out = 0;
 
-  for (int i = 0; i < note->keys; i++) {
-    chord += osc[i].sawn(note->frequencies[i]);
+  for (int i = 0; i < chord->keys; i++) {
+    out += osc[i].sawn(chord->frequencies[i]);
   }
-  chord /= note->keys;
 
-  double filtered = filter.lores(chord, 1000, 0.8);
-  output[0] = output[1] = chord;
+  out /= chord->keys;
+
+  double filtered = filter.lores(out, 1000, 0.8);
+  output[0] = output[1] = filtered;
 }
 
 void play(float *output) {
@@ -102,16 +103,16 @@ void play(float *output) {
 
   // Can process key press
   if (keyReleased && pressedIdx >= 0) {
-    // First note to play, key change, modifier change
-    if (lastNoteIdx < 0 || lastNoteIdx != pressedIdx ||
+    // First chord to play, key or modifier change
+    if (lastChordIdx < 0 || lastChordIdx != pressedIdx ||
         lastKeyModifier != keyModifier) {
       keyReleased = 0;
-      lastNoteIdx = pressedIdx;
+      lastChordIdx = pressedIdx;
       lastKeyModifier = keyModifier;
 
-      // Unplay note
-    } else if (lastNoteIdx == pressedIdx) {
-      lastNoteIdx = -1;
+      // Unplay chord
+    } else if (lastChordIdx == pressedIdx) {
+      lastChordIdx = -1;
       keyReleased = 0;
       lastKeyModifier = KeyModifier::Base;
     }
@@ -121,30 +122,30 @@ void play(float *output) {
     keyReleased = 1;
   }
 
-  // Sustain key
-  if (lastNoteIdx >= 0) {
-    Note *noteToPlay;
+  // Sustain chord
+  if (lastChordIdx >= 0) {
+    Chord *chordToPlay;
 
     switch (lastKeyModifier) {
       case KeyModifier::Base:
-        noteToPlay = currentScale[lastNoteIdx];
+        chordToPlay = currentScale[lastChordIdx];
         break;
       case KeyModifier::MajorMinor:
-        noteToPlay = currentScale[lastNoteIdx]->major_minor != NULL
-                         ? currentScale[lastNoteIdx]->major_minor
-                         : currentScale[lastNoteIdx];
+        chordToPlay = currentScale[lastChordIdx]->major_minor != NULL
+                          ? currentScale[lastChordIdx]->major_minor
+                          : currentScale[lastChordIdx];
         break;
       case KeyModifier::Major7Minor7:
-        noteToPlay = currentScale[lastNoteIdx]->major7_minor7 != NULL
-                         ? currentScale[lastNoteIdx]->major7_minor7
-                         : currentScale[lastNoteIdx];
+        chordToPlay = currentScale[lastChordIdx]->major7_minor7 != NULL
+                          ? currentScale[lastChordIdx]->major7_minor7
+                          : currentScale[lastChordIdx];
         break;
       default:
-        noteToPlay = currentScale[lastNoteIdx];
+        chordToPlay = currentScale[lastChordIdx];
         break;
     }
 
-    playNote(output, noteToPlay);
+    playChord(output, chordToPlay);
   }
 }
 
