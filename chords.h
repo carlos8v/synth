@@ -7,21 +7,28 @@
 #include <string>
 
 enum Semitone {
-  C_4,
-  C_SHARP_4,
-  D_4,
-  D_SHARP_4,
-  E_4,
-  F_4,
-  F_SHARP_4,
-  G_4,
-  G_SHARP_4,
-  A_4,
-  A_SHARP_4,
-  B_4,
+  C,
+  C_SHARP,
+  D,
+  D_SHARP,
+  E,
+  F,
+  F_SHARP,
+  G,
+  G_SHARP,
+  A,
+  A_SHARP,
+  B,
+};
+
+enum ChordType {
+  Major,
+  Minor,
+  Dim,
 };
 
 typedef struct SemitoneListItem {
+  char label[3];
   Semitone tone;
   SemitoneListItem *next;
 } SemitoneListItem;
@@ -35,14 +42,8 @@ typedef struct Chord {
   Chord *major7_minor7;
 } Chord;
 
-void setupChords();
+void setupChords(Semitone initialTone);
 
-extern Chord *c_major_scale[7];
-extern Chord *d_major_scale[7];
-extern Chord *e_major_scale[7];
-extern Chord *f_major_scale[7];
-extern Chord *g_major_scale[7];
-extern Chord *a_major_scale[7];
-extern Chord *b_major_scale[7];
+extern Chord *major_scale[7];
 
 #endif

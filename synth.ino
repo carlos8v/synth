@@ -30,7 +30,8 @@ maxiOsc osc[4];
 maxiEnv envelope;
 
 // For DEBUG
-Chord **currentScale = e_major_scale;
+Semitone initialTone = Semitone::E;
+Chord **currentScale = major_scale;
 
 void setup() {
   Serial.begin(115200);
@@ -63,7 +64,7 @@ void setup() {
   maximilian.begin(cfg);
 
   // Initialize chords references
-  setupChords();
+  setupChords(initialTone);
 }
 
 void playArpeggio(float *output, Chord *chord, int currentNote) {
