@@ -14,5 +14,6 @@
 #define KEY_7_PIN 21
 
 #define MOD_PIN_Y 34
+#define MOD_PIN_X 32
 
 #endif

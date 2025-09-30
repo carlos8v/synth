@@ -16,6 +16,8 @@ enum KeyModifier {
   Base = 0,
   MajorMinor = 1,
   Major7Minor7 = 2,
+  Sus2 = 3,
+  Sus4 = 4,
 };
 int lastKeyModifier = KeyModifier::Base;
 int keyModifier = KeyModifier::Base;
@@ -141,6 +143,16 @@ void play(float *output) {
                           ? currentScale[lastChordIdx]->major7_minor7
                           : currentScale[lastChordIdx];
         break;
+      case KeyModifier::Sus2:
+        chordToPlay = currentScale[lastChordIdx]->sus2 != NULL
+                          ? currentScale[lastChordIdx]->sus2
+                          : currentScale[lastChordIdx];
+        break;
+      case KeyModifier::Sus4:
+        chordToPlay = currentScale[lastChordIdx]->sus4 != NULL
+                          ? currentScale[lastChordIdx]->sus4
+                          : currentScale[lastChordIdx];
+        break;
       default:
         chordToPlay = currentScale[lastChordIdx];
         break;
@@ -161,18 +173,35 @@ void checkKeyPress() {
 }
 
 void checkModifier() {
+  int xValue = analogRead(MOD_PIN_X);
   int yValue = analogRead(MOD_PIN_Y);
-  int yPercent = map(yValue, 0, 4095, 0, 100);
 
-  // Neutral position
-  if (yPercent >= 40 && yPercent <= 60) {
-    keyModifier = KeyModifier::Base;
-    // Upward position
-  } else if (yPercent >= 60) {
-    keyModifier = KeyModifier::MajorMinor;
-    // keyModifier position
-  } else if (yPercent <= 40) {
-    keyModifier = KeyModifier::Major7Minor7;
+  int yPercent = map(yValue, 0, 4095, 0, 100);
+  int xPercent = map(xValue, 0, 4095, 0, 100);
+
+  // Neutral X position
+  if (xPercent >= 40 && xPercent <= 60) {
+    if (yPercent >= 40 && yPercent <= 60) {
+      keyModifier = KeyModifier::Base;
+      // Upward position
+    } else if (yPercent >= 60) {
+      keyModifier = KeyModifier::MajorMinor;
+      // Donward position
+    } else if (yPercent <= 40) {
+      keyModifier = KeyModifier::Major7Minor7;
+    }
+
+    // Neutral Y position
+  } else if (yPercent >= 40 && yPercent <= 60) {
+    if (xPercent >= 40 && xPercent <= 60) {
+      keyModifier = KeyModifier::Base;
+      // Right position
+    } else if (xPercent >= 60) {
+      keyModifier = KeyModifier::Sus4;
+      // Left position
+    } else if (xPercent <= 40) {
+      keyModifier = KeyModifier::Sus2;
+    }
   }
 }
 

@@ -56,6 +56,8 @@ Chord *makeChord(std::string chord, std::initializer_list<double> frequencies) {
 
   newChord->major_minor = NULL;
   newChord->major7_minor7 = NULL;
+  newChord->sus2 = NULL;
+  newChord->sus4 = NULL;
 
   return newChord;
 }
@@ -149,6 +151,14 @@ Chord *makeMinor7Chord(std::string chord, Semitone destTone, int higherOctave) {
   return makeFourKeyChord(chord, destTone, 3, 4, 3, higherOctave);
 }
 
+Chord *makeSus2Chord(std::string chord, Semitone destTone, int higherOctave) {
+  return makeThreeKeyChord(chord, destTone, 2, 5, higherOctave);
+}
+
+Chord *makeSus4Chord(std::string chord, Semitone destTone, int higherOctave) {
+  return makeThreeKeyChord(chord, destTone, 5, 2, higherOctave);
+}
+
 Chord *makeDimChord(std::string chord, Semitone destTone, int higherOctave) {
   return makeThreeKeyChord(chord, destTone, 3, 3, higherOctave);
 }
@@ -186,6 +196,11 @@ void populateScale(Semitone semitone) {
     std::string major7Minor7Label = base->label;
     std::string dimLabel = base->label;
 
+    std::string sus2Label = base->label;
+    sus2Label += "sus2";
+    std::string sus4Label = base->label;
+    sus4Label += "sus4";
+
     switch (chordTypes[i]) {
       case ChordType::Major:
         baseLabel += "maj";
@@ -197,6 +212,8 @@ void populateScale(Semitone semitone) {
             makeMinorChord(majorMinorLabel, base->tone, octave);
         major_scale[i]->major7_minor7 =
             makeMinor7Chord(major7Minor7Label, base->tone, octave);
+        major_scale[i]->sus2 = makeSus2Chord(sus2Label, base->tone, octave);
+        major_scale[i]->sus4 = makeSus4Chord(sus2Label, base->tone, octave);
         break;
       case ChordType::Minor:
         baseLabel += "min";
@@ -208,6 +225,8 @@ void populateScale(Semitone semitone) {
             makeMajorChord(majorMinorLabel, base->tone, octave);
         major_scale[i]->major7_minor7 =
             makeMajor7Chord(major7Minor7Label, base->tone, octave);
+        major_scale[i]->sus2 = makeSus2Chord(sus2Label, base->tone, octave);
+        major_scale[i]->sus4 = makeSus4Chord(sus2Label, base->tone, octave);
         break;
       case ChordType::Dim:
         dimLabel += "dim";

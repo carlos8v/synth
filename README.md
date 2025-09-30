@@ -14,11 +14,13 @@ Criar um sintetizador simples.
 
 ## Modificador
 
-| Direção | Modifiação    | Exemplo |
-|:--------|:--------------|:-------:|
-| Base    | Base          | `Amaj`  |
-| Cima    | Maior/menor   | `Amin`  |
-| Baixo   | Maior7/menor7 | `Amin7` |
+| Direção  | Modifiação    | Exemplo |
+|:---------|:--------------|:-------:|
+| Base     | Base          | `Amaj`  |
+| Cima     | Maior/menor   | `Amin`  |
+| Baixo    | Maior7/menor7 | `Amin7` |
+| Esquerda | Suspenso2     | `Asus2` |
+| Direita  | Suspenso4     | `Asus4` |
 
 ### Referências
 - [Making A Synth With Python — Oscillators](https://python.plainenglish.io/making-a-synth-with-python-oscillators-2cb8e68e9c3b)

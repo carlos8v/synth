@@ -40,6 +40,8 @@ typedef struct Chord {
 
   Chord *major_minor;
   Chord *major7_minor7;
+  Chord *sus2;
+  Chord *sus4;
 } Chord;
 
 void setupChords(Semitone initialTone);
