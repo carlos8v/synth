@@ -10,7 +10,7 @@ int keyNotes[] = {0, 0, 0, 0, 0, 0, 0};
 
 int lastChordIdx = -1;
 int currentNote = 0;
-int keyReleased = 0;
+int keyReleased = 1;
 
 enum KeyModifier {
   Base = 0,
@@ -19,7 +19,6 @@ enum KeyModifier {
   Sus2 = 3,
   Sus4 = 4,
 };
-int lastKeyModifier = KeyModifier::Base;
 int keyModifier = KeyModifier::Base;
 
 // Current note index for sequencing
@@ -32,8 +31,9 @@ maxiOsc osc[4];
 maxiEnv envelope;
 
 // For DEBUG
-Semitone initialTone = Semitone::E;
+Semitone initialTone = Semitone::C;
 Chord **currentScale = major_scale;
+Chord *chordToPlay = NULL;
 
 void setup() {
   Serial.begin(115200);
@@ -49,10 +49,10 @@ void setup() {
   myClock.setTicksPerBeat(4);
   myClock.setTempo(100);
 
-  envelope.setAttack(0);
+  envelope.setAttack(1);
   envelope.setDecay(1);
-  envelope.setSustain(1);
-  envelope.setRelease(1000);
+  envelope.setSustain(500);
+  envelope.setRelease(500);
 
   auto cfg = out.defaultConfig(TX_MODE);
   cfg.is_master = true;       // ESP32 generates the clock
@@ -78,14 +78,20 @@ void playArpeggio(float *output, Chord *chord, int currentNote) {
 void playChord(float *output, Chord *chord) {
   double out = 0;
 
+  double adsr = envelope.adsr(1., !keyReleased);
+
   for (int i = 0; i < chord->keys; i++) {
-    out += osc[i].sawn(chord->frequencies[i]);
+    if (i == 0) {
+      out += osc[i].sinewave(chord->frequencies[i]);
+    } else {
+      out += osc[i].triangle(chord->frequencies[i]);
+    }
   }
 
   out /= chord->keys;
 
-  double filtered = filter.lores(out, 1000, 0.8);
-  output[0] = output[1] = filtered;
+  out = filter.lores(out, adsr * 1000, 0.8);
+  output[0] = output[1] = out * adsr;
 }
 
 void play(float *output) {
@@ -96,68 +102,8 @@ void play(float *output) {
     currentNote = (currentNote + 1) % 3;  // Cycle through notes 0–3
   }
 
-  int pressedIdx = -1;
-  for (int idx = 0; idx < 7; idx++) {
-    if (keyNotes[idx]) {
-      pressedIdx = idx;
-      break;
-    }
-  }
-
-  // Can process key press
-  if (keyReleased && pressedIdx >= 0) {
-    // First chord to play, key or modifier change
-    if (lastChordIdx < 0 || lastChordIdx != pressedIdx ||
-        lastKeyModifier != keyModifier) {
-      keyReleased = 0;
-      lastChordIdx = pressedIdx;
-      lastKeyModifier = keyModifier;
-
-      // Unplay chord
-    } else if (lastChordIdx == pressedIdx) {
-      lastChordIdx = -1;
-      keyReleased = 0;
-      lastKeyModifier = KeyModifier::Base;
-    }
-  }
-
-  if (pressedIdx < 0) {
-    keyReleased = 1;
-  }
-
   // Sustain chord
   if (lastChordIdx >= 0) {
-    Chord *chordToPlay;
-
-    switch (lastKeyModifier) {
-      case KeyModifier::Base:
-        chordToPlay = currentScale[lastChordIdx];
-        break;
-      case KeyModifier::MajorMinor:
-        chordToPlay = currentScale[lastChordIdx]->major_minor != NULL
-                          ? currentScale[lastChordIdx]->major_minor
-                          : currentScale[lastChordIdx];
-        break;
-      case KeyModifier::Major7Minor7:
-        chordToPlay = currentScale[lastChordIdx]->major7_minor7 != NULL
-                          ? currentScale[lastChordIdx]->major7_minor7
-                          : currentScale[lastChordIdx];
-        break;
-      case KeyModifier::Sus2:
-        chordToPlay = currentScale[lastChordIdx]->sus2 != NULL
-                          ? currentScale[lastChordIdx]->sus2
-                          : currentScale[lastChordIdx];
-        break;
-      case KeyModifier::Sus4:
-        chordToPlay = currentScale[lastChordIdx]->sus4 != NULL
-                          ? currentScale[lastChordIdx]->sus4
-                          : currentScale[lastChordIdx];
-        break;
-      default:
-        chordToPlay = currentScale[lastChordIdx];
-        break;
-    }
-
     playChord(output, chordToPlay);
   }
 }
@@ -170,6 +116,31 @@ void checkKeyPress() {
   keyNotes[4] = !digitalRead(KEY_5_PIN);
   keyNotes[5] = !digitalRead(KEY_6_PIN);
   keyNotes[6] = !digitalRead(KEY_7_PIN);
+
+  int pressedIdx = -1;
+  for (int idx = 0; idx < 7; idx++) {
+    if (!keyNotes[idx]) continue;
+
+    // First pressed key *or
+    // Maintaining the same pressed key
+    if (keyReleased || (!keyReleased && lastChordIdx == idx)) {
+      pressedIdx = idx;
+      break;
+    }
+  }
+
+  if (keyReleased && pressedIdx >= 0) {
+    keyReleased = 0;
+    lastChordIdx = pressedIdx;
+  }
+
+  if (pressedIdx < 0) {
+    keyReleased = 1;
+  }
+
+  if (lastChordIdx >= 0 && !keyReleased) {
+    Serial.println("Playing: " + String(chordToPlay->chord));
+  }
 }
 
 void checkModifier() {
@@ -205,9 +176,41 @@ void checkModifier() {
   }
 }
 
+void updateChordToPlay() {
+  switch (keyModifier) {
+    case KeyModifier::Base:
+      chordToPlay = currentScale[lastChordIdx];
+      break;
+    case KeyModifier::MajorMinor:
+      chordToPlay = currentScale[lastChordIdx]->major_minor != NULL
+                        ? currentScale[lastChordIdx]->major_minor
+                        : currentScale[lastChordIdx];
+      break;
+    case KeyModifier::Major7Minor7:
+      chordToPlay = currentScale[lastChordIdx]->major7_minor7 != NULL
+                        ? currentScale[lastChordIdx]->major7_minor7
+                        : currentScale[lastChordIdx];
+      break;
+    case KeyModifier::Sus2:
+      chordToPlay = currentScale[lastChordIdx]->sus2 != NULL
+                        ? currentScale[lastChordIdx]->sus2
+                        : currentScale[lastChordIdx];
+      break;
+    case KeyModifier::Sus4:
+      chordToPlay = currentScale[lastChordIdx]->sus4 != NULL
+                        ? currentScale[lastChordIdx]->sus4
+                        : currentScale[lastChordIdx];
+      break;
+    default:
+      chordToPlay = currentScale[lastChordIdx];
+      break;
+  }
+}
+
 void loop() {
   maximilian.copy();  // Call the audio processing callback
 
   checkModifier();
   checkKeyPress();
+  updateChordToPlay();
 }
