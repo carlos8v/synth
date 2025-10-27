@@ -24,7 +24,7 @@ int keyModifier = KeyModifier::Base;
 Axis axis(MOD_MAX_X, MOD_MAX_Y);
 
 maxiClock myClock;
-maxiFilter hipass;
+maxiFilter lowpass;
 
 maxiOsc osc[4];
 maxiEnv envelope;
@@ -51,7 +51,7 @@ void setup() {
   envelope.setAttack(1);
   envelope.setDecay(1);
   envelope.setSustain(500);
-  envelope.setRelease(500);
+  envelope.setRelease(800);
 
   auto cfg = out.defaultConfig(TX_MODE);
   cfg.is_master = true;       // ESP32 generates the clock
@@ -70,7 +70,7 @@ void setup() {
 
 void playArpeggio(float* output, Chord* chord, int currentNote) {
   double single = osc[currentNote].sawn(chord->frequencies[currentNote]);
-  double filtered = hipass.hires(single, 1000, 0.8);  // Low-pass filter
+  double filtered = lowpass.lores(single, 1000, 0.8);  // Low-pass filter
   output[0] = output[1] = filtered;
 }
 
@@ -80,15 +80,11 @@ void playChord(float* output, Chord* chord) {
   double adsr = envelope.adsr(1., !keyReleased);
 
   for (int i = 0; i < chord->keys; i++) {
-    if (i == 0) {
-      out += osc[i].sinewave(chord->frequencies[i]);
-    } else {
-      out += osc[i].triangle(chord->frequencies[i]);
-    }
+    out += osc[i].sawn(chord->frequencies[i]);
   }
 
   out /= chord->keys;
-  out = hipass.hires(out, adsr * 1000, 0.8);
+  out = lowpass.lores(out, adsr * 1000, 0.8);
 
   output[0] = output[1] = out * adsr;
 }

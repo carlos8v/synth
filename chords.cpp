@@ -1,6 +1,6 @@
 #include "chords.h"
 
-const double A_4_BASE_FREQ = 440.00;
+const double A_3_BASE_FREQ = 220.00;
 
 SemitoneListItem *firstSemitone;
 SemitoneListItem *baseSemitone;
@@ -39,7 +39,7 @@ void advanceSemitone(SemitoneListItem **target, int steps) {
 
 double calcFrequency(double semitonesDist) {
   double exp = semitonesDist / 12.0;
-  return A_4_BASE_FREQ * pow(2, exp);
+  return A_3_BASE_FREQ * pow(2, exp);
 }
 
 Chord *makeChord(std::string chord, std::initializer_list<double> frequencies) {
