@@ -17,7 +17,7 @@ AxisPosition Axis::getPosition(int newX, int newY) {
     return AxisPosition::AXIS_RIGHT;
   }
 
-  if (x > 30 && x < 70 && y >= 70) {
+  if (x > 30 && x < 70 && y <= 30) {
     return AxisPosition::AXIS_DOWN;
   }
 
@@ -25,7 +25,7 @@ AxisPosition Axis::getPosition(int newX, int newY) {
     return AxisPosition::AXIS_LEFT;
   }
 
-  if (x > 30 && x < 70 && y <= 30) {
+  if (x > 30 && x < 70 && y >= 70) {
     return AxisPosition::AXIS_UP;
   }
 
