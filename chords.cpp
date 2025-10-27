@@ -213,7 +213,7 @@ void populateScale(Semitone semitone) {
         major_scale[i]->major7_minor7 =
             makeMinor7Chord(major7Minor7Label, base->tone, octave);
         major_scale[i]->sus2 = makeSus2Chord(sus2Label, base->tone, octave);
-        major_scale[i]->sus4 = makeSus4Chord(sus2Label, base->tone, octave);
+        major_scale[i]->sus4 = makeSus4Chord(sus4Label, base->tone, octave);
         break;
       case ChordType::Minor:
         baseLabel += "min";
@@ -226,7 +226,7 @@ void populateScale(Semitone semitone) {
         major_scale[i]->major7_minor7 =
             makeMajor7Chord(major7Minor7Label, base->tone, octave);
         major_scale[i]->sus2 = makeSus2Chord(sus2Label, base->tone, octave);
-        major_scale[i]->sus4 = makeSus4Chord(sus2Label, base->tone, octave);
+        major_scale[i]->sus4 = makeSus4Chord(sus4Label, base->tone, octave);
         break;
       case ChordType::Dim:
         dimLabel += "dim";

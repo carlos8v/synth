@@ -1,5 +1,6 @@
 #include "AudioTools.h"
 #include "AudioTools/AudioLibs/MaximilianDSP.h"
+#include "axis.h"
 #include "chords.h"
 #include "config.h"
 
@@ -20,20 +21,18 @@ enum KeyModifier {
   Sus4 = 4,
 };
 int keyModifier = KeyModifier::Base;
-
-// Current note index for sequencing
-int currentCount;
+Axis axis(MOD_MAX_X, MOD_MAX_Y);
 
 maxiClock myClock;
-maxiFilter filter;
+maxiFilter hipass;
 
 maxiOsc osc[4];
 maxiEnv envelope;
 
 // For DEBUG
 Semitone initialTone = Semitone::C;
-Chord **currentScale = major_scale;
-Chord *chordToPlay = NULL;
+Chord** currentScale = major_scale;
+Chord* chordToPlay = NULL;
 
 void setup() {
   Serial.begin(115200);
@@ -69,13 +68,13 @@ void setup() {
   setupChords(initialTone);
 }
 
-void playArpeggio(float *output, Chord *chord, int currentNote) {
+void playArpeggio(float* output, Chord* chord, int currentNote) {
   double single = osc[currentNote].sawn(chord->frequencies[currentNote]);
-  double filtered = filter.lores(single, 1000, 0.8);  // Low-pass filter
+  double filtered = hipass.hires(single, 1000, 0.8);  // Low-pass filter
   output[0] = output[1] = filtered;
 }
 
-void playChord(float *output, Chord *chord) {
+void playChord(float* output, Chord* chord) {
   double out = 0;
 
   double adsr = envelope.adsr(1., !keyReleased);
@@ -89,12 +88,12 @@ void playChord(float *output, Chord *chord) {
   }
 
   out /= chord->keys;
+  out = hipass.hires(out, adsr * 1000, 0.8);
 
-  out = filter.lores(out, adsr * 1000, 0.8);
   output[0] = output[1] = out * adsr;
 }
 
-void play(float *output) {
+void play(float* output) {
   myClock.ticker();  // Advance clock
 
   if (myClock.tick) {
@@ -144,35 +143,24 @@ void checkKeyPress() {
 }
 
 void checkModifier() {
-  int xValue = analogRead(MOD_PIN_X);
-  int yValue = analogRead(MOD_PIN_Y);
+  AxisPosition axisPosition = axis.getPosition(analogRead(MOD_PIN_X), analogRead(MOD_PIN_Y));
 
-  int yPercent = map(yValue, 0, 4095, 0, 100);
-  int xPercent = map(xValue, 0, 4095, 0, 100);
-
-  // Neutral X position
-  if (xPercent >= 40 && xPercent <= 60) {
-    if (yPercent >= 40 && yPercent <= 60) {
-      keyModifier = KeyModifier::Base;
-      // Upward position
-    } else if (yPercent >= 60) {
+  switch (axisPosition) {
+    case AxisPosition::AXIS_UP:
       keyModifier = KeyModifier::MajorMinor;
-      // Donward position
-    } else if (yPercent <= 40) {
-      keyModifier = KeyModifier::Major7Minor7;
-    }
-
-    // Neutral Y position
-  } else if (yPercent >= 40 && yPercent <= 60) {
-    if (xPercent >= 40 && xPercent <= 60) {
-      keyModifier = KeyModifier::Base;
-      // Right position
-    } else if (xPercent >= 60) {
+      break;
+    case AxisPosition::AXIS_RIGHT:
       keyModifier = KeyModifier::Sus4;
-      // Left position
-    } else if (xPercent <= 40) {
+      break;
+    case AxisPosition::AXIS_DOWN:
+      keyModifier = KeyModifier::Major7Minor7;
+      break;
+    case AxisPosition::AXIS_LEFT:
       keyModifier = KeyModifier::Sus2;
-    }
+      break;
+    default:
+      keyModifier = KeyModifier::Base;
+      break;
   }
 }
 
@@ -182,28 +170,24 @@ void updateChordToPlay() {
       chordToPlay = currentScale[lastChordIdx];
       break;
     case KeyModifier::MajorMinor:
-      chordToPlay = currentScale[lastChordIdx]->major_minor != NULL
-                        ? currentScale[lastChordIdx]->major_minor
-                        : currentScale[lastChordIdx];
+      chordToPlay = currentScale[lastChordIdx]->major_minor;
       break;
     case KeyModifier::Major7Minor7:
-      chordToPlay = currentScale[lastChordIdx]->major7_minor7 != NULL
-                        ? currentScale[lastChordIdx]->major7_minor7
-                        : currentScale[lastChordIdx];
+      chordToPlay = currentScale[lastChordIdx]->major7_minor7;
       break;
     case KeyModifier::Sus2:
-      chordToPlay = currentScale[lastChordIdx]->sus2 != NULL
-                        ? currentScale[lastChordIdx]->sus2
-                        : currentScale[lastChordIdx];
+      chordToPlay = currentScale[lastChordIdx]->sus2;
       break;
     case KeyModifier::Sus4:
-      chordToPlay = currentScale[lastChordIdx]->sus4 != NULL
-                        ? currentScale[lastChordIdx]->sus4
-                        : currentScale[lastChordIdx];
+      chordToPlay = currentScale[lastChordIdx]->sus4;
       break;
     default:
       chordToPlay = currentScale[lastChordIdx];
       break;
+  }
+
+  if (chordToPlay == NULL) {
+    chordToPlay = currentScale[lastChordIdx];
   }
 }
 

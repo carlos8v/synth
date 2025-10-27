@@ -15,5 +15,7 @@
 
 #define MOD_PIN_Y 34
 #define MOD_PIN_X 32
+#define MOD_MAX_X 4095
+#define MOD_MAX_Y 4095
 
 #endif
