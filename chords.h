@@ -6,7 +6,7 @@
 #include <initializer_list>
 #include <string>
 
-enum Semitone {
+typedef enum {
   C,
   C_SHARP,
   D,
@@ -19,18 +19,19 @@ enum Semitone {
   A,
   A_SHARP,
   B,
-};
+} Semitone;
 
-enum ChordType {
+typedef enum {
   Major,
   Minor,
   Dim,
-};
+} ChordType;
 
 typedef struct SemitoneListItem {
   char label[3];
   Semitone tone;
-  SemitoneListItem *next;
+  SemitoneListItem* previous;
+  SemitoneListItem* next;
 } SemitoneListItem;
 
 typedef struct Chord {
@@ -38,14 +39,16 @@ typedef struct Chord {
   int keys;
   double frequencies[4];
 
-  Chord *major_minor;
-  Chord *major7_minor7;
-  Chord *sus2;
-  Chord *sus4;
+  Chord* major_minor;
+  Chord* major7_minor7;
+  Chord* sus2;
+  Chord* sus4;
 } Chord;
 
-void setupChords(Semitone initialTone);
+void setupChords();
+void populateScale(Chord** scale, Semitone semitone);
 
-extern Chord *major_scale[7];
+Semitone getPreviousSemitone(Semitone semitone);
+Semitone getNextSemitone(Semitone semitone);
 
 #endif

@@ -1,37 +1,22 @@
-#include "AudioTools.h"
-#include "AudioTools/AudioLibs/MaximilianDSP.h"
-#include "axis.h"
-#include "chords.h"
-#include "config.h"
+#include "synth.h"
 
-I2SStream out;
-Maximilian maximilian(out);
+maxiOsc osc[4];
+maxiClock myClock;
+maxiFilter lowpass;
+maxiEnv envelope;
+
+SynthMode currentMode = SynthMode::PlayMode;
+
+Axis axis(MOD_MAX_X, MOD_MAX_Y);
+int modReleased = 1;
 
 int keyNotes[] = {0, 0, 0, 0, 0, 0, 0};
-
 int lastChordIdx = -1;
 int currentNote = 0;
 int keyReleased = 1;
 
-enum KeyModifier {
-  Base = 0,
-  MajorMinor = 1,
-  Major7Minor7 = 2,
-  Sus2 = 3,
-  Sus4 = 4,
-};
-int keyModifier = KeyModifier::Base;
-Axis axis(MOD_MAX_X, MOD_MAX_Y);
-
-maxiClock myClock;
-maxiFilter lowpass;
-
-maxiOsc osc[4];
-maxiEnv envelope;
-
-// For DEBUG
-Semitone initialTone = Semitone::C;
-Chord** currentScale = major_scale;
+Semitone currentTone = Semitone::C;
+Chord* currentScale[7] = {NULL, NULL, NULL, NULL, NULL, NULL, NULL};
 Chord* chordToPlay = NULL;
 
 void setup() {
@@ -45,11 +30,13 @@ void setup() {
   pinMode(KEY_6_PIN, INPUT_PULLUP);
   pinMode(KEY_7_PIN, INPUT_PULLUP);
 
+  pinMode(MOD_KEY_PIN, INPUT_PULLUP);
+
   myClock.setTicksPerBeat(4);
   myClock.setTempo(100);
 
-  envelope.setAttack(1);
-  envelope.setDecay(1);
+  envelope.setAttack(100);
+  envelope.setDecay(200);
   envelope.setSustain(500);
   envelope.setRelease(800);
 
@@ -65,13 +52,17 @@ void setup() {
   maximilian.begin(cfg);
 
   // Initialize chords references
-  setupChords(initialTone);
+  setupChords();
+  populateScale(currentScale, currentTone);
 }
 
-void playArpeggio(float* output, Chord* chord, int currentNote) {
+void playArpeggio(float* output, Chord* chord) {
+  double adsr = envelope.adsr(1., !keyReleased);
+
   double single = osc[currentNote].sawn(chord->frequencies[currentNote]);
-  double filtered = lowpass.lores(single, 1000, 0.8);  // Low-pass filter
-  output[0] = output[1] = filtered;
+  double filtered = lowpass.lores(single, adsr * 1000, 0.8);  // Low-pass filter
+
+  output[0] = output[1] = filtered * adsr;
 }
 
 void playChord(float* output, Chord* chord) {
@@ -97,8 +88,10 @@ void play(float* output) {
     currentNote = (currentNote + 1) % 3;  // Cycle through notes 0–3
   }
 
-  // Sustain chord
+  if (currentMode != SynthMode::PlayMode) return;
+
   if (lastChordIdx >= 0) {
+    // Sustain chord
     playChord(output, chordToPlay);
   }
 }
@@ -133,49 +126,29 @@ void checkKeyPress() {
     keyReleased = 1;
   }
 
+  // For DEBUG
   if (lastChordIdx >= 0 && !keyReleased) {
     Serial.println("Playing: " + String(chordToPlay->chord));
   }
 }
 
-void checkModifier() {
-  AxisPosition axisPosition = axis.getPosition(analogRead(MOD_PIN_X), analogRead(MOD_PIN_Y));
+void checkKeyModifier() {
+  int x = analogRead(MOD_PIN_X);
+  int y = analogRead(MOD_PIN_Y);
+  AxisPosition axisPosition = axis.getPosition(x, y);
 
   switch (axisPosition) {
     case AxisPosition::AXIS_UP:
-      keyModifier = KeyModifier::MajorMinor;
-      break;
-    case AxisPosition::AXIS_RIGHT:
-      keyModifier = KeyModifier::Sus4;
-      break;
-    case AxisPosition::AXIS_DOWN:
-      keyModifier = KeyModifier::Major7Minor7;
-      break;
-    case AxisPosition::AXIS_LEFT:
-      keyModifier = KeyModifier::Sus2;
-      break;
-    default:
-      keyModifier = KeyModifier::Base;
-      break;
-  }
-}
-
-void updateChordToPlay() {
-  switch (keyModifier) {
-    case KeyModifier::Base:
-      chordToPlay = currentScale[lastChordIdx];
-      break;
-    case KeyModifier::MajorMinor:
       chordToPlay = currentScale[lastChordIdx]->major_minor;
       break;
-    case KeyModifier::Major7Minor7:
+    case AxisPosition::AXIS_RIGHT:
+      chordToPlay = currentScale[lastChordIdx]->sus4;
+      break;
+    case AxisPosition::AXIS_DOWN:
       chordToPlay = currentScale[lastChordIdx]->major7_minor7;
       break;
-    case KeyModifier::Sus2:
+    case AxisPosition::AXIS_LEFT:
       chordToPlay = currentScale[lastChordIdx]->sus2;
-      break;
-    case KeyModifier::Sus4:
-      chordToPlay = currentScale[lastChordIdx]->sus4;
       break;
     default:
       chordToPlay = currentScale[lastChordIdx];
@@ -187,10 +160,82 @@ void updateChordToPlay() {
   }
 }
 
-void loop() {
+void playMode() {
   maximilian.copy();  // Call the audio processing callback
 
-  checkModifier();
   checkKeyPress();
-  updateChordToPlay();
+  checkKeyModifier();
+
+  int modPressed = !digitalRead(MOD_KEY_PIN);
+  if (!modPressed && !modReleased) {
+    modReleased = 1;
+  }
+
+  if (modPressed && modReleased) {
+    lastChordIdx = -1;
+    currentMode = SynthMode::ChordMode;
+    modReleased = 0;
+    delay(200);
+  }
+}
+
+void chordMode() {
+  int x = analogRead(MOD_PIN_X);
+  int y = analogRead(MOD_PIN_Y);
+
+  AxisPosition axisPosition = axis.getPosition(x, y);
+
+  switch (axisPosition) {
+    case AxisPosition::AXIS_CENTER:
+      // Reset key press on axis centered
+      if (!keyReleased) {
+        keyReleased = 1;
+        delay(150);
+      }
+      break;
+
+    case AxisPosition::AXIS_LEFT:
+      if (keyReleased) {
+        keyReleased = 0;
+        currentTone = getPreviousSemitone(currentTone);
+        delay(150);
+      }
+      break;
+
+    case AxisPosition::AXIS_RIGHT:
+      if (keyReleased) {
+        keyReleased = 0;
+        currentTone = getNextSemitone(currentTone);
+        delay(150);
+      }
+      break;
+
+    default:
+      break;
+  }
+
+  int modPressed = !digitalRead(MOD_KEY_PIN);
+  if (!modPressed && !modReleased) {
+    modReleased = 1;
+  }
+
+  if (modPressed && modReleased) {
+    modReleased = 0;
+    populateScale(currentScale, currentTone);
+    delay(200);
+
+    currentMode = SynthMode::PlayMode;
+  }
+}
+
+void loop() {
+  switch (currentMode) {
+    case SynthMode::PlayMode:
+      playMode();
+      break;
+    case SynthMode::ChordMode:
+      chordMode();
+    default:
+      break;
+  }
 }

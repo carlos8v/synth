@@ -2,18 +2,12 @@
 
 const double A_3_BASE_FREQ = 220.00;
 
-SemitoneListItem *firstSemitone;
-SemitoneListItem *baseSemitone;
+SemitoneListItem* firstSemitone;
+SemitoneListItem* baseSemitone;
 
-/*
- * Major progression:
- * I - ii - iii - IV - V - vi - d
- */
-Chord *major_scale[7] = {NULL, NULL, NULL, NULL, NULL, NULL, NULL};
-
-SemitoneListItem *makeSemitone(Semitone tone, std::string label) {
-  SemitoneListItem *newSemitone =
-      (SemitoneListItem *)malloc(sizeof(SemitoneListItem));
+SemitoneListItem* makeSemitone(Semitone tone, std::string label) {
+  SemitoneListItem* newSemitone =
+      (SemitoneListItem*)malloc(sizeof(SemitoneListItem));
   strcpy(newSemitone->label, label.c_str());
   newSemitone->tone = tone;
   newSemitone->next = NULL;
@@ -21,19 +15,19 @@ SemitoneListItem *makeSemitone(Semitone tone, std::string label) {
   return newSemitone;
 }
 
-void getSemitone(SemitoneListItem **target, Semitone tone) {
+void getSemitone(SemitoneListItem** base, Semitone tone) {
   while (1) {
-    if ((*target)->tone == tone) {
+    if ((*base)->tone == tone) {
       break;
     }
 
-    (*target) = (*target)->next;
+    *base = (*base)->next;
   }
 }
 
-void advanceSemitone(SemitoneListItem **target, int steps) {
+void advanceSemitone(SemitoneListItem** base, int steps) {
   for (int i = 0; i < steps; i++) {
-    (*target) = (*target)->next;
+    *base = (*base)->next;
   }
 }
 
@@ -42,8 +36,8 @@ double calcFrequency(double semitonesDist) {
   return A_3_BASE_FREQ * pow(2, exp);
 }
 
-Chord *makeChord(std::string chord, std::initializer_list<double> frequencies) {
-  Chord *newChord = (Chord *)malloc(sizeof(Chord));
+Chord* makeChord(std::string chord, std::initializer_list<double> frequencies) {
+  Chord* newChord = (Chord*)malloc(sizeof(Chord));
 
   int keys = 0;
   for (double freq : frequencies) {
@@ -62,18 +56,18 @@ Chord *makeChord(std::string chord, std::initializer_list<double> frequencies) {
   return newChord;
 }
 
-Chord *makeThreeKeyChord(std::string chord, Semitone destTone, int firstStep,
+Chord* makeThreeKeyChord(std::string chord, Semitone destTone, int firstStep,
                          int secondStep, int higherOctave) {
   int octavePrefix = higherOctave;
 
-  SemitoneListItem *firstTone = firstSemitone;
+  SemitoneListItem* firstTone = firstSemitone;
   getSemitone(&firstTone, destTone);
 
   double firstDistance =
       firstTone->tone + (octavePrefix * 12.0) - baseSemitone->tone;
   double firstFreq = calcFrequency(firstDistance);
 
-  SemitoneListItem *secondTone = firstTone;
+  SemitoneListItem* secondTone = firstTone;
   advanceSemitone(&secondTone, firstStep);
 
   octavePrefix =
@@ -82,7 +76,7 @@ Chord *makeThreeKeyChord(std::string chord, Semitone destTone, int firstStep,
       secondTone->tone + (octavePrefix * 12.0) - baseSemitone->tone;
   double secondFreq = calcFrequency(secondDistance);
 
-  SemitoneListItem *thirdTone = secondTone;
+  SemitoneListItem* thirdTone = secondTone;
   advanceSemitone(&thirdTone, secondStep);
 
   octavePrefix =
@@ -94,18 +88,18 @@ Chord *makeThreeKeyChord(std::string chord, Semitone destTone, int firstStep,
   return makeChord(chord, {firstFreq, secondFreq, thridFreq});
 }
 
-Chord *makeFourKeyChord(std::string chord, Semitone destTone, int firstStep,
+Chord* makeFourKeyChord(std::string chord, Semitone destTone, int firstStep,
                         int secondStep, int thirdStep, int higherOctave) {
   int octavePrefix = higherOctave;
 
-  SemitoneListItem *firstTone = firstSemitone;
+  SemitoneListItem* firstTone = firstSemitone;
   getSemitone(&firstTone, destTone);
 
   int firstDistance =
       firstTone->tone + (octavePrefix * 12.0) - baseSemitone->tone;
   double firstFreq = calcFrequency(firstDistance);
 
-  SemitoneListItem *secondTone = firstTone;
+  SemitoneListItem* secondTone = firstTone;
   advanceSemitone(&secondTone, firstStep);
 
   octavePrefix =
@@ -114,7 +108,7 @@ Chord *makeFourKeyChord(std::string chord, Semitone destTone, int firstStep,
       secondTone->tone + (octavePrefix * 12.0) - baseSemitone->tone;
   double secondFreq = calcFrequency(secondDistance);
 
-  SemitoneListItem *thirdTone = secondTone;
+  SemitoneListItem* thirdTone = secondTone;
   advanceSemitone(&thirdTone, secondStep);
 
   octavePrefix =
@@ -123,7 +117,7 @@ Chord *makeFourKeyChord(std::string chord, Semitone destTone, int firstStep,
       thirdTone->tone + (octavePrefix * 12.0) - baseSemitone->tone;
   double thridFreq = calcFrequency(thirdDistance);
 
-  SemitoneListItem *fourthTone = thirdTone;
+  SemitoneListItem* fourthTone = thirdTone;
   advanceSemitone(&fourthTone, thirdStep);
 
   octavePrefix =
@@ -135,49 +129,46 @@ Chord *makeFourKeyChord(std::string chord, Semitone destTone, int firstStep,
   return makeChord(chord, {firstFreq, secondFreq, thridFreq, fourfhFreq});
 }
 
-Chord *makeMajorChord(std::string chord, Semitone destTone, int higherOctave) {
+Chord* makeMajorChord(std::string chord, Semitone destTone, int higherOctave) {
   return makeThreeKeyChord(chord, destTone, 4, 3, higherOctave);
 }
 
-Chord *makeMajor7Chord(std::string chord, Semitone destTone, int higherOctave) {
+Chord* makeMajor7Chord(std::string chord, Semitone destTone, int higherOctave) {
   return makeFourKeyChord(chord, destTone, 4, 3, 4, higherOctave);
 }
 
-Chord *makeMinorChord(std::string chord, Semitone destTone, int higherOctave) {
+Chord* makeMinorChord(std::string chord, Semitone destTone, int higherOctave) {
   return makeThreeKeyChord(chord, destTone, 3, 4, higherOctave);
 }
 
-Chord *makeMinor7Chord(std::string chord, Semitone destTone, int higherOctave) {
+Chord* makeMinor7Chord(std::string chord, Semitone destTone, int higherOctave) {
   return makeFourKeyChord(chord, destTone, 3, 4, 3, higherOctave);
 }
 
-Chord *makeSus2Chord(std::string chord, Semitone destTone, int higherOctave) {
+Chord* makeSus2Chord(std::string chord, Semitone destTone, int higherOctave) {
   return makeThreeKeyChord(chord, destTone, 2, 5, higherOctave);
 }
 
-Chord *makeSus4Chord(std::string chord, Semitone destTone, int higherOctave) {
+Chord* makeSus4Chord(std::string chord, Semitone destTone, int higherOctave) {
   return makeThreeKeyChord(chord, destTone, 5, 2, higherOctave);
 }
 
-Chord *makeDimChord(std::string chord, Semitone destTone, int higherOctave) {
+Chord* makeDimChord(std::string chord, Semitone destTone, int higherOctave) {
   return makeThreeKeyChord(chord, destTone, 3, 3, higherOctave);
 }
 
-void freeChord(Chord *chord) {
-  if (chord->major_minor) {
-    free(chord->major_minor);
-  }
-
-  if (chord->major7_minor7) {
-    free(chord->major7_minor7);
-  }
+void freeChord(Chord* chord) {
+  if (chord->major_minor) free(chord->major_minor);
+  if (chord->major7_minor7) free(chord->major7_minor7);
+  if (chord->sus2) free(chord->sus2);
+  if (chord->sus4) free(chord->sus4);
 
   free(chord);
 }
 
 // Only major scale
-void populateScale(Semitone semitone) {
-  SemitoneListItem *base = firstSemitone;
+void populateScale(Chord** scale, Semitone semitone) {
+  SemitoneListItem* base = firstSemitone;
   getSemitone(&base, semitone);
 
   ChordType chordTypes[] = {
@@ -187,18 +178,22 @@ void populateScale(Semitone semitone) {
   int octave = 0;
 
   for (int i = 0; i < 7; i++) {
-    if (major_scale[i] != NULL) {
-      freeChord(major_scale[i]);
+    if (scale[i] != NULL) {
+      Chord* oldChord = scale[i];
+      scale[i] = NULL;
+      freeChord(oldChord);
     }
 
     std::string baseLabel = base->label;
     std::string majorMinorLabel = base->label;
     std::string major7Minor7Label = base->label;
-    std::string dimLabel = base->label;
 
+    std::string dimLabel = base->label;
     std::string sus2Label = base->label;
-    sus2Label += "sus2";
     std::string sus4Label = base->label;
+
+    dimLabel += "dim";
+    sus2Label += "sus2";
     sus4Label += "sus4";
 
     switch (chordTypes[i]) {
@@ -207,33 +202,32 @@ void populateScale(Semitone semitone) {
         majorMinorLabel += "min";
         major7Minor7Label += "min7";
 
-        major_scale[i] = makeMajorChord(baseLabel, base->tone, octave);
-        major_scale[i]->major_minor =
+        scale[i] = makeMajorChord(baseLabel, base->tone, octave);
+        scale[i]->major_minor =
             makeMinorChord(majorMinorLabel, base->tone, octave);
-        major_scale[i]->major7_minor7 =
+        scale[i]->major7_minor7 =
             makeMinor7Chord(major7Minor7Label, base->tone, octave);
-        major_scale[i]->sus2 = makeSus2Chord(sus2Label, base->tone, octave);
-        major_scale[i]->sus4 = makeSus4Chord(sus4Label, base->tone, octave);
+        scale[i]->sus2 = makeSus2Chord(sus2Label, base->tone, octave);
+        scale[i]->sus4 = makeSus4Chord(sus4Label, base->tone, octave);
         break;
       case ChordType::Minor:
         baseLabel += "min";
         majorMinorLabel += "maj";
         major7Minor7Label += "maj7";
 
-        major_scale[i] = makeMinorChord(baseLabel, base->tone, octave);
-        major_scale[i]->major_minor =
+        scale[i] = makeMinorChord(baseLabel, base->tone, octave);
+        scale[i]->major_minor =
             makeMajorChord(majorMinorLabel, base->tone, octave);
-        major_scale[i]->major7_minor7 =
+        scale[i]->major7_minor7 =
             makeMajor7Chord(major7Minor7Label, base->tone, octave);
-        major_scale[i]->sus2 = makeSus2Chord(sus2Label, base->tone, octave);
-        major_scale[i]->sus4 = makeSus4Chord(sus4Label, base->tone, octave);
+        scale[i]->sus2 = makeSus2Chord(sus2Label, base->tone, octave);
+        scale[i]->sus4 = makeSus4Chord(sus4Label, base->tone, octave);
         break;
       case ChordType::Dim:
-        dimLabel += "dim";
-        major_scale[i] = makeDimChord(dimLabel, base->tone, octave);
+        scale[i] = makeDimChord(dimLabel, base->tone, octave);
         break;
       default:
-        major_scale[i] = NULL;
+        scale[i] = NULL;
         break;
     }
 
@@ -247,7 +241,7 @@ void populateScale(Semitone semitone) {
   }
 }
 
-void setupChords(Semitone initalTone) {
+void setupChords() {
   std::string labels[] = {"C",  "C#", "D",  "D#", "E",  "F",
                           "F#", "G",  "G#", "A",  "A#", "B"};
   Semitone base_semitones[] = {
@@ -261,11 +255,12 @@ void setupChords(Semitone initalTone) {
   for (int i = 0; i < 12; i++) {
     current = makeSemitone(base_semitones[i], labels[i]);
 
-    // Chain semitones
     if (i == 0) {
       firstSemitone = current;
     } else {
+      // Chain semitones
       last->next = current;
+      current->previous = last;
     }
 
     // Set base semitone
@@ -278,7 +273,19 @@ void setupChords(Semitone initalTone) {
 
   // Cycle back to the first semitone
   last->next = firstSemitone;
+  firstSemitone->previous = last;
+}
 
-  // Initialize chords
-  populateScale(initalTone);
+Semitone getPreviousSemitone(Semitone semitone) {
+  SemitoneListItem* listTone = firstSemitone;
+  getSemitone(&listTone, semitone);
+
+  return listTone->previous->tone;
+}
+
+Semitone getNextSemitone(Semitone semitone) {
+  SemitoneListItem* listTone = firstSemitone;
+  getSemitone(&listTone, semitone);
+
+  return listTone->next->tone;
 }

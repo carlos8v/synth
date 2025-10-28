@@ -9,7 +9,7 @@ AxisPosition Axis::getPosition(int newX, int newY) {
   x = map(newX, 0, maxX, 0, 100);
   y = map(newY, 0, maxY, 0, 100);
 
-  if (x > 30 && x < 70 && y > 30 && y < 70) {
+  if (x > 40 && x < 60 && y > 40 && y < 60) {
     return AxisPosition::AXIS_CENTER;
   }
 
