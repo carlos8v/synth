@@ -46,6 +46,7 @@ Chord* makeChord(std::string chord, std::initializer_list<double> frequencies) {
   }
 
   newChord->keys = keys;
+  memset(newChord->chord, 0, 10);
   strcpy(newChord->chord, chord.c_str());
 
   newChord->major_minor = NULL;

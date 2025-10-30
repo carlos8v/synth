@@ -1,26 +1,40 @@
 #include "synth.h"
 
-maxiOsc osc[4];
-maxiClock myClock;
-maxiFilter lowpass;
-maxiEnv envelope;
+void displayChord(void* parameter) {
+  for (;;) {
+    // Acquire mutex before accessing the shared buffer
+    if (xSemaphoreTake(mutex_display, portMAX_DELAY) == pdTRUE) {
+      display.clearDisplay();
+      display.setCursor(0, 0);
+      display.println((char*)display_buffer);
 
-SynthMode currentMode = SynthMode::PlayMode;
+      xSemaphoreGive(mutex_display);  // Release mutex
 
-Axis axis(MOD_MAX_X, MOD_MAX_Y);
-int modReleased = 1;
-
-int keyNotes[] = {0, 0, 0, 0, 0, 0, 0};
-int lastChordIdx = -1;
-int currentNote = 0;
-int keyReleased = 1;
-
-Semitone currentTone = Semitone::C;
-Chord* currentScale[7] = {NULL, NULL, NULL, NULL, NULL, NULL, NULL};
-Chord* chordToPlay = NULL;
+      display.display();
+    }
+    vTaskDelay(pdMS_TO_TICKS(100));
+  }
+}
 
 void setup() {
   Serial.begin(115200);
+
+  Wire.setPins(DISPLAY_SDA, DISPLAY_SCL);
+  Wire.begin();
+
+  if (!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) {
+    Serial.println("SSD1306 allocation failed");
+    for (;;);
+  }
+
+  memset((void*)display_buffer, 0, sizeof(display_buffer));
+
+  // Create the mutex for shared buffer access
+  mutex_display = xSemaphoreCreateMutex();
+
+  // Create a FreeRTOS task to run on Core 0
+  xTaskCreatePinnedToCore(displayChord, "Display chord", 10000, NULL, 1, NULL,
+                          0);
 
   pinMode(KEY_1_PIN, INPUT_PULLUP);
   pinMode(KEY_2_PIN, INPUT_PULLUP);
@@ -54,6 +68,20 @@ void setup() {
   // Initialize chords references
   setupChords();
   populateScale(currentScale, currentTone);
+
+  display.display();
+  delay(2000);
+
+  display.clearDisplay();
+  display.setTextSize(1);
+  display.setTextColor(SSD1306_WHITE);
+  display.cp437(true);
+
+  String text = "Waiting...";
+  for (int i = 0; i < 10; i++) {
+    display.write(text[i]);
+  }
+  display.display();
 }
 
 void playArpeggio(float* output, Chord* chord) {
@@ -124,11 +152,6 @@ void checkKeyPress() {
 
   if (pressedIdx < 0) {
     keyReleased = 1;
-  }
-
-  // For DEBUG
-  if (lastChordIdx >= 0 && !keyReleased) {
-    Serial.println("Playing: " + String(chordToPlay->chord));
   }
 }
 
@@ -229,6 +252,13 @@ void chordMode() {
 }
 
 void loop() {
+  // Update the shared buffer safely
+  if (xSemaphoreTake(mutex_display, portMAX_DELAY) == pdTRUE) {
+    strcpy((char*)display_buffer,
+           chordToPlay == NULL ? "Waiting..." : chordToPlay->chord);
+    xSemaphoreGive(mutex_display);
+  }
+
   switch (currentMode) {
     case SynthMode::PlayMode:
       playMode();

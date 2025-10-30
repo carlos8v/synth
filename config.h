@@ -1,6 +1,13 @@
 #ifndef CONFIG
 #define CONFIG
 
+#define DISPLAY_SDA 13
+#define DISPLAY_SCL 14
+
+#define SCREEN_WIDTH 128
+#define SCREEN_HEIGHT 64
+#define SCREEN_ADDRESS 0x3C
+
 #define I2S_BCK_PIN 26
 #define I2S_WS_PIN 25
 #define I2S_DATA_PIN 27
