@@ -23,7 +23,7 @@ Criar um sintetizador simples e portátil.
 
 Dependendo da direção do analógico o tom do acorde pode mudar:
 
-| Direção  | Modifiação    | Exemplo |
+| Direção  | Modificação   | Exemplo |
 |:---------|:--------------|:-------:|
 | Base     | Base          | `Amaj`  |
 | Cima     | Maior/menor   | `Amin`  |
@@ -42,5 +42,6 @@ Dependendo da direção do analógico o tom do acorde pode mudar:
 - Switches/keycaps ou botões
 - Botão switch
 
-### Referências
+### Referências/Inspirações
+- [HiChord](https://hichord.shop/)
 - [Making A Synth With Python — Oscillators](https://python.plainenglish.io/making-a-synth-with-python-oscillators-2cb8e68e9c3b)
