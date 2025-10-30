@@ -1,5 +1,5 @@
-#ifndef CHORDS
-#define CHORDS
+#ifndef CHORDS_H
+#define CHORDS_H
 
 #include <cmath>
 #include <cstring>

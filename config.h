@@ -1,15 +1,13 @@
-#ifndef CONFIG
-#define CONFIG
+#ifndef CONFIG_H
+#define CONFIG_H
 
 #define DISPLAY_SDA 13
 #define DISPLAY_SCL 14
+#define OLED_RESET -1
 
 #define SCREEN_WIDTH 128
 #define SCREEN_HEIGHT 64
 #define SCREEN_ADDRESS 0x3C
-
-#define TEXT_HEIGHT 5
-#define TEXT_WIDTH 5
 
 #define I2S_BCK_PIN 26
 #define I2S_WS_PIN 25

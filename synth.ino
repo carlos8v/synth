@@ -1,28 +1,21 @@
 #include "synth.h"
 
-void displayChord(void* parameter) {
+void displayScreen(void* parameter) {
   for (;;) {
     // Acquire mutex before accessing the shared buffer
     if (xSemaphoreTake(mutex_display, portMAX_DELAY) == pdTRUE) {
-      display.clearDisplay();
-      display.setTextSize(1);
-
-      display.drawBitmap(0, 0, lineout_bmp, ICON_WIDTH, ICON_HEIGHT, 1);
-
-      display.setCursor(SCREEN_WIDTH - (TEXT_WIDTH * 2) - 4, 0);
-      display.print(displayInfo.tone);
-
-      int x = (SCREEN_WIDTH / 2) -
-              ceil((double)displayInfo.chord.length() / 2) * TEXT_WIDTH * 2;
-      int y = (SCREEN_HEIGHT / 2) - (TEXT_HEIGHT * 2);
-
-      display.setCursor(x, y);
-      display.setTextSize(2);
-      display.print(displayInfo.chord);
+      switch (displayInfo.mode) {
+        case SynthMode::PlayMode:
+          display.playMode(displayInfo);
+          break;
+        case SynthMode::ChordMode:
+          display.chordMode(displayInfo);
+          break;
+        default:
+          break;
+      }
 
       xSemaphoreGive(mutex_display);  // Release mutex
-
-      display.display();
     }
     vTaskDelay(pdMS_TO_TICKS(100));
   }
@@ -34,7 +27,7 @@ void setup() {
   Wire.setPins(DISPLAY_SDA, DISPLAY_SCL);
   Wire.begin();
 
-  if (!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) {
+  if (!display.begin()) {
     Serial.println("SSD1306 allocation failed");
     for (;;);
   }
@@ -43,7 +36,7 @@ void setup() {
   mutex_display = xSemaphoreCreateMutex();
 
   // Create a FreeRTOS task to run on Core 0
-  xTaskCreatePinnedToCore(displayChord, "Display chord", 10000, NULL, 1, NULL,
+  xTaskCreatePinnedToCore(displayScreen, "Display screen", 10000, NULL, 1, NULL,
                           0);
 
   pinMode(KEY_1_PIN, INPUT_PULLUP);
@@ -83,10 +76,7 @@ void setup() {
   displayInfo.tone = String(getSemitoneLabel(currentTone).c_str());
   displayInfo.chord = String(chordToPlay->chord);
 
-  display.clearDisplay();
-  display.setTextSize(1);
-  display.setTextColor(SSD1306_WHITE);
-  display.cp437(true);
+  display.initConfig();
 }
 
 void playArpeggio(float* output, Chord* chord) {
@@ -259,6 +249,7 @@ void chordMode() {
 void loop() {
   // Update the shared buffer safely
   if (xSemaphoreTake(mutex_display, portMAX_DELAY) == pdTRUE) {
+    displayInfo.mode = currentMode;
     displayInfo.tone = String(getSemitoneLabel(currentTone).c_str());
     displayInfo.chord = String(chordToPlay->chord);
 
