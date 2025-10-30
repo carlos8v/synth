@@ -5,8 +5,20 @@ void displayChord(void* parameter) {
     // Acquire mutex before accessing the shared buffer
     if (xSemaphoreTake(mutex_display, portMAX_DELAY) == pdTRUE) {
       display.clearDisplay();
-      display.setCursor(0, 0);
-      display.println((char*)display_buffer);
+      display.setTextSize(1);
+
+      display.drawBitmap(0, 0, lineout_bmp, ICON_WIDTH, ICON_HEIGHT, 1);
+
+      display.setCursor(SCREEN_WIDTH - (TEXT_WIDTH * 2) - 4, 0);
+      display.print(displayInfo.tone);
+
+      int x = (SCREEN_WIDTH / 2) -
+              ceil((double)displayInfo.chord.length() / 2) * TEXT_WIDTH * 2;
+      int y = (SCREEN_HEIGHT / 2) - (TEXT_HEIGHT * 2);
+
+      display.setCursor(x, y);
+      display.setTextSize(2);
+      display.print(displayInfo.chord);
 
       xSemaphoreGive(mutex_display);  // Release mutex
 
@@ -26,8 +38,6 @@ void setup() {
     Serial.println("SSD1306 allocation failed");
     for (;;);
   }
-
-  memset((void*)display_buffer, 0, sizeof(display_buffer));
 
   // Create the mutex for shared buffer access
   mutex_display = xSemaphoreCreateMutex();
@@ -68,20 +78,15 @@ void setup() {
   // Initialize chords references
   setupChords();
   populateScale(currentScale, currentTone);
+  chordToPlay = currentScale[0];
 
-  display.display();
-  delay(2000);
+  displayInfo.tone = String(getSemitoneLabel(currentTone).c_str());
+  displayInfo.chord = String(chordToPlay->chord);
 
   display.clearDisplay();
   display.setTextSize(1);
   display.setTextColor(SSD1306_WHITE);
   display.cp437(true);
-
-  String text = "Waiting...";
-  for (int i = 0; i < 10; i++) {
-    display.write(text[i]);
-  }
-  display.display();
 }
 
 void playArpeggio(float* output, Chord* chord) {
@@ -254,8 +259,9 @@ void chordMode() {
 void loop() {
   // Update the shared buffer safely
   if (xSemaphoreTake(mutex_display, portMAX_DELAY) == pdTRUE) {
-    strcpy((char*)display_buffer,
-           chordToPlay == NULL ? "Waiting..." : chordToPlay->chord);
+    displayInfo.tone = String(getSemitoneLabel(currentTone).c_str());
+    displayInfo.chord = String(chordToPlay->chord);
+
     xSemaphoreGive(mutex_display);
   }
 

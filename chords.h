@@ -48,6 +48,7 @@ typedef struct Chord {
 void setupChords();
 void populateScale(Chord** scale, Semitone semitone);
 
+std::string getSemitoneLabel(Semitone semitone);
 Semitone getPreviousSemitone(Semitone semitone);
 Semitone getNextSemitone(Semitone semitone);
 

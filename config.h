@@ -8,6 +8,9 @@
 #define SCREEN_HEIGHT 64
 #define SCREEN_ADDRESS 0x3C
 
+#define TEXT_HEIGHT 5
+#define TEXT_WIDTH 5
+
 #define I2S_BCK_PIN 26
 #define I2S_WS_PIN 25
 #define I2S_DATA_PIN 27

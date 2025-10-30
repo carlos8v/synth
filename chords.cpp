@@ -15,6 +15,37 @@ SemitoneListItem* makeSemitone(Semitone tone, std::string label) {
   return newSemitone;
 }
 
+std::string getSemitoneLabel(Semitone semitone) {
+  switch (semitone) {
+    case Semitone::C:
+      return "C";
+    case Semitone::C_SHARP:
+      return "C#";
+    case Semitone::D:
+      return "D";
+    case Semitone::D_SHARP:
+      return "D#";
+    case Semitone::E:
+      return "E";
+    case Semitone::F:
+      return "E";
+    case Semitone::F_SHARP:
+      return "F#";
+    case Semitone::G:
+      return "G";
+    case Semitone::G_SHARP:
+      return "G#";
+    case Semitone::A:
+      return "A";
+    case Semitone::A_SHARP:
+      return "A#";
+    case Semitone::B:
+      return "B";
+    default:
+      return "Error";
+  }
+}
+
 void getSemitone(SemitoneListItem** base, Semitone tone) {
   while (1) {
     if ((*base)->tone == tone) {
