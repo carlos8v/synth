@@ -37,7 +37,7 @@ Dependendo da direção do analógico o tom do acorde pode mudar:
 - Display OLED 128x64 I2C
 - DAC externo (PCM5102)
 - Amplificador (MAX98357A)
-- Auto falante
+- Alto falante
 - Analógico
 - Switches/keycaps ou botões
 - Botão switch
