@@ -80,10 +80,14 @@ Chord* makeChord(std::string chord, std::initializer_list<double> frequencies) {
   memset(newChord->chord, 0, 10);
   strcpy(newChord->chord, chord.c_str());
 
+  newChord->seven= NULL;
   newChord->major_minor = NULL;
   newChord->major7_minor7 = NULL;
+  newChord->major9_minor9 = NULL;
   newChord->sus2 = NULL;
   newChord->sus4 = NULL;
+  newChord->dim = NULL;
+  newChord->aug = NULL;
 
   return newChord;
 }
@@ -161,6 +165,58 @@ Chord* makeFourKeyChord(std::string chord, Semitone destTone, int firstStep,
   return makeChord(chord, {firstFreq, secondFreq, thridFreq, fourfhFreq});
 }
 
+Chord* makeFiveKeyChord(std::string chord, Semitone destTone, int firstStep,
+                        int secondStep, int thirdStep, int fourthStep,
+                        int higherOctave) {
+  int octavePrefix = higherOctave;
+
+  SemitoneListItem* firstTone = firstSemitone;
+  getSemitone(&firstTone, destTone);
+
+  int firstDistance =
+      firstTone->tone + (octavePrefix * 12.0) - baseSemitone->tone;
+  double firstFreq = calcFrequency(firstDistance);
+
+  SemitoneListItem* secondTone = firstTone;
+  advanceSemitone(&secondTone, firstStep);
+
+  octavePrefix =
+      firstTone->tone + firstStep >= 12 ? (octavePrefix + 1) : octavePrefix;
+  int secondDistance =
+      secondTone->tone + (octavePrefix * 12.0) - baseSemitone->tone;
+  double secondFreq = calcFrequency(secondDistance);
+
+  SemitoneListItem* thirdTone = secondTone;
+  advanceSemitone(&thirdTone, secondStep);
+
+  octavePrefix =
+      secondTone->tone + secondStep >= 12 ? (octavePrefix + 1) : octavePrefix;
+  int thirdDistance =
+      thirdTone->tone + (octavePrefix * 12.0) - baseSemitone->tone;
+  double thridFreq = calcFrequency(thirdDistance);
+
+  SemitoneListItem* fourthTone = thirdTone;
+  advanceSemitone(&fourthTone, thirdStep);
+
+  octavePrefix =
+      thirdTone->tone + thirdStep >= 12 ? (octavePrefix + 1) : octavePrefix;
+  int fourthDistance =
+      fourthTone->tone + (octavePrefix * 12.0) - baseSemitone->tone;
+  double fourfhFreq = calcFrequency(fourthDistance);
+
+  SemitoneListItem* fifthTone = fourthTone;
+  advanceSemitone(&fifthTone, fourthStep);
+
+  octavePrefix =
+      fourthTone->tone + fourthStep >= 12 ? (octavePrefix + 1) : octavePrefix;
+  int fifthDistance =
+      fifthTone->tone + (octavePrefix * 12.0) - baseSemitone->tone;
+  double fifthFreq = calcFrequency(fifthDistance);
+
+  return makeChord(chord,
+                   {firstFreq, secondFreq, thridFreq, fourfhFreq, fifthFreq});
+}
+
 Chord* makeMajorChord(std::string chord, Semitone destTone, int higherOctave) {
   return makeThreeKeyChord(chord, destTone, 4, 3, higherOctave);
 }
@@ -169,12 +225,20 @@ Chord* makeMajor7Chord(std::string chord, Semitone destTone, int higherOctave) {
   return makeFourKeyChord(chord, destTone, 4, 3, 4, higherOctave);
 }
 
+Chord* makeMajor9Chord(std::string chord, Semitone destTone, int higherOctave) {
+  return makeFiveKeyChord(chord, destTone, 4, 3, 4, 3, higherOctave);
+}
+
 Chord* makeMinorChord(std::string chord, Semitone destTone, int higherOctave) {
   return makeThreeKeyChord(chord, destTone, 3, 4, higherOctave);
 }
 
 Chord* makeMinor7Chord(std::string chord, Semitone destTone, int higherOctave) {
   return makeFourKeyChord(chord, destTone, 3, 4, 3, higherOctave);
+}
+
+Chord* makeMinor9Chord(std::string chord, Semitone destTone, int higherOctave) {
+  return makeFiveKeyChord(chord, destTone, 3, 4, 3, 4, higherOctave);
 }
 
 Chord* makeSus2Chord(std::string chord, Semitone destTone, int higherOctave) {
@@ -189,11 +253,19 @@ Chord* makeDimChord(std::string chord, Semitone destTone, int higherOctave) {
   return makeThreeKeyChord(chord, destTone, 3, 3, higherOctave);
 }
 
+Chord* makeAugChord(std::string chord, Semitone destTone, int higherOctave) {
+  return makeThreeKeyChord(chord, destTone, 4, 4, higherOctave);
+}
+
 void freeChord(Chord* chord) {
+  if (chord->seven) free(chord->seven);
   if (chord->major_minor) free(chord->major_minor);
   if (chord->major7_minor7) free(chord->major7_minor7);
+  if (chord->major9_minor9) free(chord->major9_minor9);
   if (chord->sus2) free(chord->sus2);
   if (chord->sus4) free(chord->sus4);
+  if (chord->dim) free(chord->dim);
+  if (chord->aug) free(chord->aug);
 
   free(chord);
 }
@@ -217,43 +289,61 @@ void populateScale(Chord** scale, Semitone semitone) {
     }
 
     std::string baseLabel = base->label;
+    std::string sevenLabel = base->label;
     std::string majorMinorLabel = base->label;
     std::string major7Minor7Label = base->label;
+    std::string major9Minor9Label = base->label;
 
-    std::string dimLabel = base->label;
     std::string sus2Label = base->label;
     std::string sus4Label = base->label;
+    std::string dimLabel = base->label;
+    std::string augLabel = base->label;
 
-    dimLabel += "dim";
     sus2Label += "sus2";
     sus4Label += "sus4";
+    dimLabel += "dim";
+    augLabel += "aug";
 
     switch (chordTypes[i]) {
       case ChordType::Major:
         baseLabel += "maj";
+        sevenLabel += "7";
         majorMinorLabel += "min";
         major7Minor7Label += "min7";
+        major9Minor9Label += "min9";
 
         scale[i] = makeMajorChord(baseLabel, base->tone, octave);
+        scale[i]->seven = makeMajor7Chord(sevenLabel, base->tone, octave);
         scale[i]->major_minor =
             makeMinorChord(majorMinorLabel, base->tone, octave);
         scale[i]->major7_minor7 =
             makeMinor7Chord(major7Minor7Label, base->tone, octave);
+        scale[i]->major9_minor9 =
+            makeMinor9Chord(major9Minor9Label, base->tone, octave);
         scale[i]->sus2 = makeSus2Chord(sus2Label, base->tone, octave);
         scale[i]->sus4 = makeSus4Chord(sus4Label, base->tone, octave);
+        scale[i]->dim = makeDimChord(dimLabel, base->tone, octave);
+        scale[i]->aug = makeAugChord(augLabel, base->tone, octave);
         break;
       case ChordType::Minor:
         baseLabel += "min";
+        sevenLabel += "min7";
         majorMinorLabel += "maj";
         major7Minor7Label += "maj7";
+        major9Minor9Label += "maj9";
 
         scale[i] = makeMinorChord(baseLabel, base->tone, octave);
+        scale[i]->seven = makeMinor7Chord(sevenLabel, base->tone, octave);
         scale[i]->major_minor =
             makeMajorChord(majorMinorLabel, base->tone, octave);
         scale[i]->major7_minor7 =
             makeMajor7Chord(major7Minor7Label, base->tone, octave);
+        scale[i]->major9_minor9 =
+            makeMajor9Chord(major9Minor9Label, base->tone, octave);
         scale[i]->sus2 = makeSus2Chord(sus2Label, base->tone, octave);
         scale[i]->sus4 = makeSus4Chord(sus4Label, base->tone, octave);
+        scale[i]->dim = makeDimChord(dimLabel, base->tone, octave);
+        scale[i]->aug = makeAugChord(augLabel, base->tone, octave);
         break;
       case ChordType::Dim:
         scale[i] = makeDimChord(dimLabel, base->tone, octave);

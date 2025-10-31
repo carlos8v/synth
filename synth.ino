@@ -83,7 +83,7 @@ void playArpeggio(float* output, Chord* chord) {
   double adsr = envelope.adsr(1., !keyReleased);
 
   double single = osc[currentNote].sawn(chord->frequencies[currentNote]);
-  double filtered = lowpass.lores(single, adsr * 1000, 0.8);  // Low-pass filter
+  double filtered = lowpass.lores(single, adsr * 1500, 0.8);  // Low-pass filter
 
   output[0] = output[1] = filtered * adsr;
 }
@@ -98,7 +98,7 @@ void playChord(float* output, Chord* chord) {
   }
 
   out /= chord->keys;
-  out = lowpass.lores(out, adsr * 1000, 0.8);
+  out = lowpass.lores(out, adsr * 1500, 0.8);
 
   output[0] = output[1] = out * adsr;
 }
@@ -159,14 +159,26 @@ void checkKeyModifier() {
     case AxisPosition::AXIS_UP:
       chordToPlay = currentScale[lastChordIdx]->major_minor;
       break;
-    case AxisPosition::AXIS_RIGHT:
-      chordToPlay = currentScale[lastChordIdx]->sus4;
+    case AxisPosition::AXIS_UP_RIGHT:
+      chordToPlay = currentScale[lastChordIdx]->seven;
       break;
-    case AxisPosition::AXIS_DOWN:
+    case AxisPosition::AXIS_RIGHT:
       chordToPlay = currentScale[lastChordIdx]->major7_minor7;
       break;
-    case AxisPosition::AXIS_LEFT:
+    case AxisPosition::AXIS_DOWN_RIGHT:
+      chordToPlay = currentScale[lastChordIdx]->major9_minor9;
+      break;
+    case AxisPosition::AXIS_DOWN:
+      chordToPlay = currentScale[lastChordIdx]->sus4;
+      break;
+    case AxisPosition::AXIS_DOWN_LEFT:
       chordToPlay = currentScale[lastChordIdx]->sus2;
+      break;
+    case AxisPosition::AXIS_LEFT:
+      chordToPlay = currentScale[lastChordIdx]->dim;
+      break;
+    case AxisPosition::AXIS_UP_LEFT:
+      chordToPlay = currentScale[lastChordIdx]->aug;
       break;
     default:
       chordToPlay = currentScale[lastChordIdx];
@@ -190,7 +202,7 @@ void playMode() {
   }
 
   if (modPressed && modReleased) {
-    lastChordIdx = -1;
+    lastChordIdx = 0;
     currentMode = SynthMode::ChordMode;
     modReleased = 0;
     delay(200);
@@ -243,6 +255,7 @@ void chordMode() {
     delay(200);
 
     currentMode = SynthMode::PlayMode;
+    chordToPlay = currentScale[0];
   }
 }
 

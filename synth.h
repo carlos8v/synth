@@ -23,7 +23,7 @@ typedef enum {
   Sus4 = 4,
 } KeyModifier;
 
-maxiOsc osc[4];
+maxiOsc osc[5];
 maxiClock myClock;
 maxiFilter lowpass;
 maxiEnv envelope;
@@ -34,7 +34,7 @@ Axis axis(MOD_MAX_X, MOD_MAX_Y);
 int modReleased = 1;
 
 int keyNotes[] = {0, 0, 0, 0, 0, 0, 0};
-int lastChordIdx = -1;
+int lastChordIdx = 0;
 int currentNote = 0;
 int keyReleased = 1;
 

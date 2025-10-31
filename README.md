@@ -14,6 +14,7 @@ Criar um sintetizador simples e portátil.
 ![circuit.png](./assets/circuit.png)
 
 ### Bibliotecas
+
 - [Maximilian](https://github.com/pschatzmann/Maximilian)
 - [arduino-audio-tools](https://github.com/pschatzmann/arduino-audio-tools)
 - [Adafruit_SSD1306](https://github.com/adafruit/Adafruit_SSD1306)
@@ -23,13 +24,17 @@ Criar um sintetizador simples e portátil.
 
 Dependendo da direção do analógico o tom do acorde pode mudar:
 
-| Direção  | Modificação   | Exemplo |
-|:---------|:--------------|:-------:|
-| Base     | Base          | `Amaj`  |
-| Cima     | Maior/menor   | `Amin`  |
-| Baixo    | Maior7/menor7 | `Amin7` |
-| Esquerda | Suspenso2     | `Asus2` |
-| Direita  | Suspenso4     | `Asus4` |
+| Direção        | Modificação   | Exemplo |
+| :------------- | :------------ | :-----: |
+| Base           | Base          | `Cmaj`  |
+| Cima           | Maior/menor   | `Cmin`  |
+| Cima Direita   | Sétima        |  `C7`   |
+| Direita        | Maior7/menor7 | `Cmin7` |
+| Baixo Direita  | Maior9/menor9 | `Cmin9` |
+| Baixo          | Suspenso4     | `Csus4` |
+| Baixo Esquerda | Suspenso2     | `Csus2` |
+| Esquerda       | Diminuto      | `Cdim`  |
+| Cima Esquerda  | Aumentado     | `Caug`  |
 
 ## Componentes
 
@@ -43,5 +48,6 @@ Dependendo da direção do analógico o tom do acorde pode mudar:
 - Botão switch
 
 ### Referências/Inspirações
+
 - [HiChord](https://hichord.shop/)
 - [Making A Synth With Python — Oscillators](https://python.plainenglish.io/making-a-synth-with-python-oscillators-2cb8e68e9c3b)

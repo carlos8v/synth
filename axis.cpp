@@ -9,24 +9,40 @@ AxisPosition Axis::getPosition(int newX, int newY) {
   x = map(newX, 0, maxX, 0, 100);
   y = map(newY, 0, maxY, 0, 100);
 
-  if (x > 40 && x < 60 && y > 40 && y < 60) {
+  if (x > 30 && x < 70 && y > 30 && y < 70) {
     return AxisPosition::AXIS_CENTER;
   }
 
-  if (y > 30 && y < 70 && x >= 70) {
-    return AxisPosition::AXIS_RIGHT;
+  if (x > 25 && x < 75 && y >= 75) {
+    return AxisPosition::AXIS_UP;
   }
 
-  if (x > 30 && x < 70 && y <= 30) {
+  if (x > 25 && x < 75 && y <= 25) {
     return AxisPosition::AXIS_DOWN;
   }
 
-  if (y > 30 && y < 70 && x <= 30) {
+  if (y > 25 && y < 75 && x >= 75) {
+    return AxisPosition::AXIS_RIGHT;
+  }
+
+  if (y > 25 && y < 75 && x <= 25) {
     return AxisPosition::AXIS_LEFT;
   }
 
-  if (x > 30 && x < 70 && y >= 70) {
-    return AxisPosition::AXIS_UP;
+  if (x >= 75 && y >= 75) {
+    return AxisPosition::AXIS_UP_RIGHT;
+  }
+
+  if (x >= 75 && y <= 25) {
+    return AxisPosition::AXIS_DOWN_RIGHT;
+  }
+
+  if (x <= 25 && y >= 75) {
+    return AxisPosition::AXIS_UP_LEFT;
+  }
+
+  if (x <= 25 && y <= 75) {
+    return AxisPosition::AXIS_DOWN_LEFT;
   }
 
   // Error fallback
