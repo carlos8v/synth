@@ -22,9 +22,9 @@ typedef enum {
 } Semitone;
 
 typedef enum {
-  Major,
-  Minor,
-  Dim,
+  MAJOR,
+  MINOR,
+  DIM,
 } ChordType;
 
 typedef struct SemitoneListItem {

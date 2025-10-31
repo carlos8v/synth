@@ -6,11 +6,11 @@
 #include <SPI.h>
 #include <Wire.h>
 
-#define ICON_HEIGHT 10
 #define ICON_WIDTH 10
+#define ICON_HEIGHT 10
 
-#define TEXT_HEIGHT 5
 #define TEXT_WIDTH 5
+#define TEXT_HEIGHT 7
 
 static const unsigned char PROGMEM speaker_bmp[] = {
     0x00, 0x00, 0x00, 0x00, 0x19, 0x00, 0xf8, 0x80, 0xfa, 0x80,
@@ -29,12 +29,18 @@ static const unsigned char PROGMEM arrow_right_bmp[] = {
     0x01, 0x80, 0x03, 0x00, 0x06, 0x00, 0x0c, 0x00, 0x18, 0x00};
 
 typedef enum {
-  PlayMode = 0,
-  ChordMode = 1,
+  PLAY_MODE = 0,
+  CHORD_MODE = 1,
 } SynthMode;
+
+typedef enum {
+  LINE_OUT = 0,
+  SPEAKERS = 1,
+} OutMode;
 
 typedef struct DisplayInfo {
   SynthMode mode;
+  OutMode outMode;
   String tone;
   String chord;
 } DisplayInfo;

@@ -1,6 +1,7 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
+#define OUT_MODE_PIN 12
 #define DISPLAY_SDA 13
 #define DISPLAY_SCL 14
 #define OLED_RESET -1
@@ -21,9 +22,9 @@
 #define KEY_6_PIN 4
 #define KEY_7_PIN 21
 
-#define MOD_KEY_PIN 33
+#define MOD_KEY_PIN 32
 #define MOD_PIN_Y 34
-#define MOD_PIN_X 32
+#define MOD_PIN_X 33
 #define MOD_MAX_X 4095
 #define MOD_MAX_Y 4095
 

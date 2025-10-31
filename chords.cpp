@@ -80,7 +80,7 @@ Chord* makeChord(std::string chord, std::initializer_list<double> frequencies) {
   memset(newChord->chord, 0, 10);
   strcpy(newChord->chord, chord.c_str());
 
-  newChord->seven= NULL;
+  newChord->seven = NULL;
   newChord->major_minor = NULL;
   newChord->major7_minor7 = NULL;
   newChord->major9_minor9 = NULL;
@@ -276,8 +276,8 @@ void populateScale(Chord** scale, Semitone semitone) {
   getSemitone(&base, semitone);
 
   ChordType chordTypes[] = {
-      ChordType::Major, ChordType::Minor, ChordType::Minor, ChordType::Major,
-      ChordType::Major, ChordType::Minor, ChordType::Dim};
+      ChordType::MAJOR, ChordType::MINOR, ChordType::MINOR, ChordType::MAJOR,
+      ChordType::MAJOR, ChordType::MINOR, ChordType::DIM};
   int steps[] = {2, 2, 1, 2, 2, 2, 2};
   int octave = 0;
 
@@ -305,7 +305,7 @@ void populateScale(Chord** scale, Semitone semitone) {
     augLabel += "aug";
 
     switch (chordTypes[i]) {
-      case ChordType::Major:
+      case ChordType::MAJOR:
         baseLabel += "maj";
         sevenLabel += "7";
         majorMinorLabel += "min";
@@ -325,7 +325,7 @@ void populateScale(Chord** scale, Semitone semitone) {
         scale[i]->dim = makeDimChord(dimLabel, base->tone, octave);
         scale[i]->aug = makeAugChord(augLabel, base->tone, octave);
         break;
-      case ChordType::Minor:
+      case ChordType::MINOR:
         baseLabel += "min";
         sevenLabel += "min7";
         majorMinorLabel += "maj";
@@ -345,7 +345,7 @@ void populateScale(Chord** scale, Semitone semitone) {
         scale[i]->dim = makeDimChord(dimLabel, base->tone, octave);
         scale[i]->aug = makeAugChord(augLabel, base->tone, octave);
         break;
-      case ChordType::Dim:
+      case ChordType::DIM:
         scale[i] = makeDimChord(dimLabel, base->tone, octave);
         break;
       default:

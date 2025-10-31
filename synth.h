@@ -15,20 +15,12 @@ SemaphoreHandle_t mutex_display;
 I2SStream out;
 Maximilian maximilian(out);
 
-typedef enum {
-  Base = 0,
-  MajorMinor = 1,
-  Major7Minor7 = 2,
-  Sus2 = 3,
-  Sus4 = 4,
-} KeyModifier;
-
 maxiOsc osc[5];
 maxiClock myClock;
 maxiFilter lowpass;
 maxiEnv envelope;
 
-SynthMode currentMode = SynthMode::PlayMode;
+SynthMode currentMode = SynthMode::PLAY_MODE;
 
 Axis axis(MOD_MAX_X, MOD_MAX_Y);
 int modReleased = 1;

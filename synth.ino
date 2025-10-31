@@ -5,10 +5,10 @@ void displayScreen(void* parameter) {
     // Acquire mutex before accessing the shared buffer
     if (xSemaphoreTake(mutex_display, portMAX_DELAY) == pdTRUE) {
       switch (displayInfo.mode) {
-        case SynthMode::PlayMode:
+        case SynthMode::PLAY_MODE:
           display.playMode(displayInfo);
           break;
-        case SynthMode::ChordMode:
+        case SynthMode::CHORD_MODE:
           display.chordMode(displayInfo);
           break;
         default:
@@ -48,6 +48,7 @@ void setup() {
   pinMode(KEY_7_PIN, INPUT_PULLUP);
 
   pinMode(MOD_KEY_PIN, INPUT_PULLUP);
+  pinMode(OUT_MODE_PIN, INPUT_PULLUP);
 
   myClock.setTicksPerBeat(4);
   myClock.setTempo(100);
@@ -111,7 +112,7 @@ void play(float* output) {
     currentNote = (currentNote + 1) % 3;  // Cycle through notes 0–3
   }
 
-  if (currentMode != SynthMode::PlayMode) return;
+  if (currentMode != SynthMode::PLAY_MODE) return;
 
   if (lastChordIdx >= 0) {
     // Sustain chord
@@ -120,13 +121,13 @@ void play(float* output) {
 }
 
 void checkKeyPress() {
-  keyNotes[0] = !digitalRead(KEY_1_PIN);
-  keyNotes[1] = !digitalRead(KEY_2_PIN);
-  keyNotes[2] = !digitalRead(KEY_3_PIN);
-  keyNotes[3] = !digitalRead(KEY_4_PIN);
-  keyNotes[4] = !digitalRead(KEY_5_PIN);
-  keyNotes[5] = !digitalRead(KEY_6_PIN);
-  keyNotes[6] = !digitalRead(KEY_7_PIN);
+  keyNotes[0] = digitalRead(KEY_1_PIN) == LOW;
+  keyNotes[1] = digitalRead(KEY_2_PIN) == LOW;
+  keyNotes[2] = digitalRead(KEY_3_PIN) == LOW;
+  keyNotes[3] = digitalRead(KEY_4_PIN) == LOW;
+  keyNotes[4] = digitalRead(KEY_5_PIN) == LOW;
+  keyNotes[5] = digitalRead(KEY_6_PIN) == LOW;
+  keyNotes[6] = digitalRead(KEY_7_PIN) == LOW;
 
   int pressedIdx = -1;
   for (int idx = 0; idx < 7; idx++) {
@@ -196,14 +197,14 @@ void playMode() {
   checkKeyPress();
   checkKeyModifier();
 
-  int modPressed = !digitalRead(MOD_KEY_PIN);
+  int modPressed = digitalRead(MOD_KEY_PIN) == LOW;
   if (!modPressed && !modReleased) {
     modReleased = 1;
   }
 
   if (modPressed && modReleased) {
     lastChordIdx = 0;
-    currentMode = SynthMode::ChordMode;
+    currentMode = SynthMode::CHORD_MODE;
     modReleased = 0;
     delay(200);
   }
@@ -244,7 +245,7 @@ void chordMode() {
       break;
   }
 
-  int modPressed = !digitalRead(MOD_KEY_PIN);
+  int modPressed = digitalRead(MOD_KEY_PIN) == LOW;
   if (!modPressed && !modReleased) {
     modReleased = 1;
   }
@@ -254,7 +255,7 @@ void chordMode() {
     populateScale(currentScale, currentTone);
     delay(200);
 
-    currentMode = SynthMode::PlayMode;
+    currentMode = SynthMode::PLAY_MODE;
     chordToPlay = currentScale[0];
   }
 }
@@ -263,6 +264,8 @@ void loop() {
   // Update the shared buffer safely
   if (xSemaphoreTake(mutex_display, portMAX_DELAY) == pdTRUE) {
     displayInfo.mode = currentMode;
+    displayInfo.outMode = digitalRead(OUT_MODE_PIN) == LOW ? OutMode::LINE_OUT
+                                                           : OutMode::SPEAKERS;
     displayInfo.tone = String(getSemitoneLabel(currentTone).c_str());
     displayInfo.chord = String(chordToPlay->chord);
 
@@ -270,10 +273,10 @@ void loop() {
   }
 
   switch (currentMode) {
-    case SynthMode::PlayMode:
+    case SynthMode::PLAY_MODE:
       playMode();
       break;
-    case SynthMode::ChordMode:
+    case SynthMode::CHORD_MODE:
       chordMode();
     default:
       break;
