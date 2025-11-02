@@ -99,7 +99,11 @@ void playChord(float* output, Chord* chord) {
   }
 
   out /= chord->keys;
-  out = lowpass.lores(out, adsr * 1500, 0.8);
+
+  // TODO: dynamic filter cutoff
+  out = lowpass.lores(
+      out, adsr * (chord->frequencies[chord->keys - 1] + FILTER_CUTOFF), 1.0);
+  out = hipass.hires(out, adsr * (chord->frequencies[0] - FILTER_CUTOFF), 1.0);
 
   output[0] = output[1] = out * adsr;
 }

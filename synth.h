@@ -17,7 +17,7 @@ Maximilian maximilian(out);
 
 maxiOsc osc[5];
 maxiClock myClock;
-maxiFilter lowpass;
+maxiFilter hipass, lowpass;
 maxiEnv envelope;
 
 SynthMode currentMode = SynthMode::PLAY_MODE;
