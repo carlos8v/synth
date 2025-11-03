@@ -89,7 +89,7 @@ void Display::menuScreen(DisplayInfo displayInfo) {
   // Pitch
   if (displayInfo.menuIdx == 2) {
     screen.setCursor(100, 28);
-    screen.print("+" + String(displayInfo.pitch));
+    screen.print(String(displayInfo.pitch >= 0 ? '+' :  '-') + String(abs(displayInfo.pitch)));
     screen.drawBitmap(94, 28, arrow_left_bmp, 5, 7, 1);
     screen.drawBitmap(113, 28, arrow_right_bmp, 5, 7, 1);
   }
