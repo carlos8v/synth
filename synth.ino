@@ -53,10 +53,10 @@ void setup() {
   myClock.setTicksPerBeat(4);
   myClock.setTempo(100);
 
-  envelope.setAttack(100);
-  envelope.setDecay(200);
-  envelope.setSustain(500);
-  envelope.setRelease(800);
+  envelope.setAttack(ADSROptions[currentADSR][0]);
+  envelope.setDecay(ADSROptions[currentADSR][1]);
+  envelope.setSustain(ADSROptions[currentADSR][2]);
+  envelope.setRelease(ADSROptions[currentADSR][3]);
 
   auto cfg = out.defaultConfig(TX_MODE);
   cfg.is_master = true;       // ESP32 generates the clock
@@ -75,12 +75,14 @@ void setup() {
   chordToPlay = currentScale[0];
 
   // Initial display config
-  displayInfo.menuIdx = 1;
-  displayInfo.pitch = currentPitch;
   displayInfo.mode = currentMode;
-  displayInfo.osci = Osci::SAWN_OSCI;
   displayInfo.tone = String(getSemitoneLabel(currentTone).c_str());
   displayInfo.chord = String(chordToPlay->chord);
+
+  displayInfo.menuIdx = 0;
+  displayInfo.adsr = currentADSR;
+  displayInfo.pitch = currentPitch;
+  displayInfo.osci = Osci::SAWN_OSCI;
 
   display.initConfig();
 }
@@ -146,7 +148,9 @@ double squareChord(Chord* chord) {
 
 void playChord(float* output, Chord* chord) {
   double out = 0;
-  double adsr = envelope.adsr(1., !keyReleased);
+  double adsr = displayInfo.adsr == ADSR_OPTION::SUSTAIN
+                    ? 1.0
+                    : envelope.adsr(1., !keyReleased);
 
   switch (displayInfo.osci) {
     case Osci::SAWN_OSCI:
@@ -308,12 +312,8 @@ void menuMode() {
                              axisPosition == AxisPosition::AXIS_RIGHT)) {
     keyReleased = 0;
 
-    // TODO: handle ADSR
-    if (displayInfo.menuIdx == 0) {
-    }
-
     // Keynote
-    if (displayInfo.menuIdx == 1) {
+    if (displayInfo.menuIdx == 0) {
       if (axisPosition == AxisPosition::AXIS_LEFT) {
         currentTone = getPreviousSemitone(currentTone);
       } else if (axisPosition == AxisPosition::AXIS_RIGHT) {
@@ -324,7 +324,7 @@ void menuMode() {
     }
 
     // Pitch
-    if (displayInfo.menuIdx == 2) {
+    if (displayInfo.menuIdx == 1) {
       if (axisPosition == AxisPosition::AXIS_LEFT) {
         currentPitch = max(currentPitch - 1, -2);
       } else if (axisPosition == AxisPosition::AXIS_RIGHT) {
@@ -336,15 +336,42 @@ void menuMode() {
     }
 
     // Osci
+    if (displayInfo.menuIdx == 2) {
+      if (axisPosition == AxisPosition::AXIS_LEFT) {
+        displayInfo.osci -= 1;
+        if (displayInfo.osci < 0) {
+          displayInfo.osci = Osci::SQUARE_OSCI;
+        }
+
+      } else if (axisPosition == AxisPosition::AXIS_RIGHT) {
+        displayInfo.osci += 1;
+        if (displayInfo.osci >= MAX_OSCI) {
+          displayInfo.osci = Osci::SAWN_OSCI;
+        }
+      }
+
+      delay(150);
+    }
+
+    // ADSR
     if (displayInfo.menuIdx == 3) {
       if (axisPosition == AxisPosition::AXIS_LEFT) {
-        displayInfo.osci =
-            displayInfo.osci - 1 < 0 ? Osci::SQUARE_OSCI : displayInfo.osci - 1;
+        displayInfo.adsr -= 1;
+        if (displayInfo.adsr < 0) {
+          displayInfo.adsr = ADSR_OPTION::SUSTAIN;
+        }
+
       } else if (axisPosition == AxisPosition::AXIS_RIGHT) {
-        displayInfo.osci = displayInfo.osci + 1 >= MAX_OSCI
-                               ? Osci::SAWN_OSCI
-                               : displayInfo.osci + 1;
+        displayInfo.adsr += 1;
+        if (displayInfo.adsr >= MAX_ADSR) {
+          displayInfo.adsr = ADSR_OPTION::SHORT;
+        }
       }
+
+      envelope.setAttack(ADSROptions[displayInfo.adsr][0]);
+      envelope.setDecay(ADSROptions[displayInfo.adsr][1]);
+      envelope.setSustain(ADSROptions[displayInfo.adsr][2]);
+      envelope.setRelease(ADSROptions[displayInfo.adsr][3]);
 
       delay(150);
     }

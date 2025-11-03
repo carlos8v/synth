@@ -83,10 +83,10 @@ static const unsigned char PROGMEM oscillator_bmp[] = {
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
 static const unsigned char* menuIcons[] = {
-    adsr_bmp,
     keynote_bmp,
     pitch_bmp,
     oscillator_bmp,
+    adsr_bmp,
 };
 
 typedef enum {
@@ -106,6 +106,7 @@ typedef struct DisplayInfo {
   String chord;
 
   int menuIdx;
+  int adsr;
   int pitch;
   int osci;
 } DisplayInfo;

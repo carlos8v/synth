@@ -44,12 +44,13 @@ void Display::mainScreen(DisplayInfo displayInfo) {
 }
 
 char menuLabels[MAX_MENU_ITEMS][10] = {
-    "ADSR",
     "Keynote",
     "Pitch",
     "Oscil.",
+    "ADSR",
 };
 
+String ADSRLabels[4] = {"Short", "Swell", "Long", "Sustain"};
 String osciLabels[4] = {"Sawn", "Sine", "Trian.", "Squar."};
 
 void Display::menuScreen(DisplayInfo displayInfo) {
@@ -79,16 +80,8 @@ void Display::menuScreen(DisplayInfo displayInfo) {
   screen.setCursor(28, 50);
   screen.print(menuLabels[nextIdx]);
 
-  // TODO: ADSR config
-  if (displayInfo.menuIdx == 0) {
-    screen.setCursor(89, 28);
-    screen.print("Long");
-    screen.drawBitmap(83, 28, arrow_left_bmp, 5, 7, 1);
-    screen.drawBitmap(113, 28, arrow_right_bmp, 5, 7, 1);
-  }
-
   // Keynote
-  if (displayInfo.menuIdx == 1) {
+  if (displayInfo.menuIdx == 0) {
     screen.setCursor(100, 28);
     screen.print(displayInfo.tone);
     screen.drawBitmap(94, 28, arrow_left_bmp, 5, 7, 1);
@@ -96,7 +89,7 @@ void Display::menuScreen(DisplayInfo displayInfo) {
   }
 
   // Pitch
-  if (displayInfo.menuIdx == 2) {
+  if (displayInfo.menuIdx == 1) {
     screen.setCursor(100, 28);
     screen.print(String(displayInfo.pitch >= 0 ? '+' : '-') +
                  String(abs(displayInfo.pitch)));
@@ -105,13 +98,24 @@ void Display::menuScreen(DisplayInfo displayInfo) {
   }
 
   // Oscillator
-  if (displayInfo.menuIdx == 3) {
+  if (displayInfo.menuIdx == 2) {
     int len = osciLabels[displayInfo.osci].length();
     int osciX = 113 - (len * TEXT_WIDTH) - (len + 1);
 
     screen.setCursor(osciX, 28);
     screen.print(osciLabels[displayInfo.osci]);
     screen.drawBitmap(osciX - 6, 28, arrow_left_bmp, 5, 7, 1);
+    screen.drawBitmap(113, 28, arrow_right_bmp, 5, 7, 1);
+  }
+
+  // ADSR
+  if (displayInfo.menuIdx == 3) {
+    int len = ADSRLabels[displayInfo.adsr].length();
+    int adsrX = 113 - (len * TEXT_WIDTH) - (len + 1);
+
+    screen.setCursor(adsrX, 28);
+    screen.print(ADSRLabels[displayInfo.adsr]);
+    screen.drawBitmap(adsrX - 6, 28, arrow_left_bmp, 5, 7, 1);
     screen.drawBitmap(113, 28, arrow_right_bmp, 5, 7, 1);
   }
 
