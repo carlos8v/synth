@@ -34,7 +34,9 @@ int ADSROptions[4][4] = {
     {0, 0, 0, 0},          // SUSTAIN - ignore ADSR
 };
 
-Display display(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_ADDRESS, OLED_RESET);
+Adafruit_SSD1306 screen(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+Display display(&screen);
+
 DisplayInfo displayInfo;
 SemaphoreHandle_t mutex_display;
 

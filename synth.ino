@@ -17,7 +17,7 @@ void displayScreen(void* parameter) {
 
       xSemaphoreGive(mutex_display);  // Release mutex
     }
-    vTaskDelay(pdMS_TO_TICKS(200));
+    vTaskDelay(pdMS_TO_TICKS(300));
   }
 }
 
@@ -27,7 +27,7 @@ void setup() {
   Wire.setPins(DISPLAY_SDA, DISPLAY_SCL);
   Wire.begin();
 
-  if (!display.begin()) {
+  if (!display.begin(SCREEN_ADDRESS)) {
     Serial.println("SSD1306 allocation failed");
     for (;;);
   }
@@ -35,9 +35,9 @@ void setup() {
   // Create the mutex for shared buffer access
   mutex_display = xSemaphoreCreateMutex();
 
-  // Create a FreeRTOS task to run on Core 1
+  // Create a FreeRTOS task to run on Core 0
   xTaskCreatePinnedToCore(displayScreen, "Display screen", 10000, NULL, 1, NULL,
-                          1);
+                          0);
 
   pinMode(KEY_1_PIN, INPUT_PULLUP);
   pinMode(KEY_2_PIN, INPUT_PULLUP);

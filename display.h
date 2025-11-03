@@ -117,16 +117,14 @@ typedef struct DisplayInfo {
 
 class Display {
  private:
-  Adafruit_SSD1306 screen;
+  Adafruit_SSD1306* screen;
   uint8_t width;
   uint8_t height;
-  uint8_t address;
 
  public:
-  Display(uint8_t screenWidth, uint8_t screenHeight, uint8_t address,
-          bool reset = true);
+  Display(Adafruit_SSD1306* screen);
 
-  bool begin(void);
+  bool begin(uint8_t address);
   void initConfig(void);
   void mainScreen(DisplayInfo displayInfo);
   void menuScreen(DisplayInfo displayInfo);
