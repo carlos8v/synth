@@ -89,13 +89,6 @@ static const unsigned char* menuIcons[] = {
     oscillator_bmp,
 };
 
-static const char menuLabels[MAX_MENU_ITEMS][10] = {
-    "ADSR",
-    "Keynote",
-    "Pitch",
-    "Oscil.",
-};
-
 typedef enum {
   PLAY_MODE = 0,
   MENU_MODE = 1,
@@ -109,10 +102,12 @@ typedef enum {
 typedef struct DisplayInfo {
   SynthMode mode;
   OutMode outMode;
-  int menuIdx;
-  int pitch;
   String tone;
   String chord;
+
+  int menuIdx;
+  int pitch;
+  int osci;
 } DisplayInfo;
 
 class Display {

@@ -8,6 +8,15 @@
 #include "config.h"
 #include "display.h"
 
+#define MAX_OSCI 4
+
+typedef enum {
+  SAWN_OSCI = 0,
+  SINE_OSCI = 1,
+  TRIANGLE_OSCI = 2,
+  SQUARE_OSCI = 3,
+} Osci;
+
 Display display(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_ADDRESS, OLED_RESET);
 DisplayInfo displayInfo;
 SemaphoreHandle_t mutex_display;

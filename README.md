@@ -20,6 +20,12 @@ Criar um sintetizador simples e portátil.
 - [Adafruit_SSD1306](https://github.com/adafruit/Adafruit_SSD1306)
 - [Adafruit-GFX-Library](https://github.com/adafruit/Adafruit-GFX-Library)
 
+## Funcionalidades
+
+- Ajuste de pitch
+- Ajuste de osciladores (sawn, sine, triangle, square)
+- Ajuste de ADSR
+
 ## Modificador
 
 Dependendo da direção do analógico o tom do acorde pode mudar:

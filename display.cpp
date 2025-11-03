@@ -43,6 +43,15 @@ void Display::mainScreen(DisplayInfo displayInfo) {
   screen.display();
 }
 
+char menuLabels[MAX_MENU_ITEMS][10] = {
+    "ADSR",
+    "Keynote",
+    "Pitch",
+    "Oscil.",
+};
+
+String osciLabels[4] = {"Sawn", "Sine", "Trian.", "Squar."};
+
 void Display::menuScreen(DisplayInfo displayInfo) {
   int currentIdx = displayInfo.menuIdx;
   int previousIdx = currentIdx - 1 < 0 ? MAX_MENU_ITEMS - 1 : currentIdx - 1;
@@ -89,16 +98,20 @@ void Display::menuScreen(DisplayInfo displayInfo) {
   // Pitch
   if (displayInfo.menuIdx == 2) {
     screen.setCursor(100, 28);
-    screen.print(String(displayInfo.pitch >= 0 ? '+' :  '-') + String(abs(displayInfo.pitch)));
+    screen.print(String(displayInfo.pitch >= 0 ? '+' : '-') +
+                 String(abs(displayInfo.pitch)));
     screen.drawBitmap(94, 28, arrow_left_bmp, 5, 7, 1);
     screen.drawBitmap(113, 28, arrow_right_bmp, 5, 7, 1);
   }
 
-  // TODO: Oscillator config
+  // Oscillator
   if (displayInfo.menuIdx == 3) {
-    screen.setCursor(89, 28);
-    screen.print("Sawn");
-    screen.drawBitmap(83, 28, arrow_left_bmp, 5, 7, 1);
+    int len = osciLabels[displayInfo.osci].length();
+    int osciX = 113 - (len * TEXT_WIDTH) - (len + 1);
+
+    screen.setCursor(osciX, 28);
+    screen.print(osciLabels[displayInfo.osci]);
+    screen.drawBitmap(osciX - 6, 28, arrow_left_bmp, 5, 7, 1);
     screen.drawBitmap(113, 28, arrow_right_bmp, 5, 7, 1);
   }
 

@@ -78,6 +78,7 @@ void setup() {
   displayInfo.menuIdx = 1;
   displayInfo.pitch = currentPitch;
   displayInfo.mode = currentMode;
+  displayInfo.osci = Osci::SAWN_OSCI;
   displayInfo.tone = String(getSemitoneLabel(currentTone).c_str());
   displayInfo.chord = String(chordToPlay->chord);
 
@@ -93,10 +94,8 @@ void playArpeggio(float* output, Chord* chord) {
   output[0] = output[1] = filtered * adsr;
 }
 
-void playChord(float* output, Chord* chord) {
+double sawnChord(Chord* chord, double adsr) {
   double out = 0;
-
-  double adsr = envelope.adsr(1., !keyReleased);
 
   for (int i = 0; i < chord->keys; i++) {
     out += osc[i].sawn(chord->frequencies[i]);
@@ -108,6 +107,61 @@ void playChord(float* output, Chord* chord) {
   out = lowpass.lores(
       out, adsr * (chord->frequencies[chord->keys - 1] + FILTER_CUTOFF), 1.0);
   out = hipass.hires(out, adsr * (chord->frequencies[0] - FILTER_CUTOFF), 1.0);
+
+  return out;
+}
+
+double sineChord(Chord* chord) {
+  double out = 0;
+
+  for (int i = 0; i < chord->keys; i++) {
+    out += osc[i].sinewave(chord->frequencies[i]);
+  }
+
+  out /= chord->keys;
+  return out;
+}
+
+double triangleChord(Chord* chord) {
+  double out = 0;
+
+  for (int i = 0; i < chord->keys; i++) {
+    out += osc[i].triangle(chord->frequencies[i]);
+  }
+
+  out /= chord->keys;
+  return out;
+}
+
+double squareChord(Chord* chord) {
+  double out = 0;
+
+  for (int i = 0; i < chord->keys; i++) {
+    out += osc[i].square(chord->frequencies[i]);
+  }
+
+  out /= chord->keys;
+  return out;
+}
+
+void playChord(float* output, Chord* chord) {
+  double out = 0;
+  double adsr = envelope.adsr(1., !keyReleased);
+
+  switch (displayInfo.osci) {
+    case Osci::SAWN_OSCI:
+      out = sawnChord(chord, adsr);
+      break;
+    case Osci::SINE_OSCI:
+      out = sineChord(chord);
+      break;
+    case Osci::TRIANGLE_OSCI:
+      out = triangleChord(chord);
+      break;
+    case Osci::SQUARE_OSCI:
+      out = squareChord(chord);
+      break;
+  }
 
   output[0] = output[1] = out * adsr;
 }
@@ -254,7 +308,10 @@ void menuMode() {
                              axisPosition == AxisPosition::AXIS_RIGHT)) {
     keyReleased = 0;
 
-    // TODO: handle other options
+    // TODO: handle ADSR
+    if (displayInfo.menuIdx == 0) {
+    }
+
     // Keynote
     if (displayInfo.menuIdx == 1) {
       if (axisPosition == AxisPosition::AXIS_LEFT) {
@@ -275,6 +332,20 @@ void menuMode() {
       }
 
       displayInfo.pitch = currentPitch;
+      delay(150);
+    }
+
+    // Osci
+    if (displayInfo.menuIdx == 3) {
+      if (axisPosition == AxisPosition::AXIS_LEFT) {
+        displayInfo.osci =
+            displayInfo.osci - 1 < 0 ? Osci::SQUARE_OSCI : displayInfo.osci - 1;
+      } else if (axisPosition == AxisPosition::AXIS_RIGHT) {
+        displayInfo.osci = displayInfo.osci + 1 >= MAX_OSCI
+                               ? Osci::SAWN_OSCI
+                               : displayInfo.osci + 1;
+      }
+
       delay(150);
     }
   }
