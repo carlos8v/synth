@@ -20,14 +20,15 @@ void Display::initConfig(void) {
   screen.cp437(true);
 }
 
-void Display::playMode(DisplayInfo displayInfo) {
+void Display::mainScreen(DisplayInfo displayInfo) {
   screen.clearDisplay();
   screen.setTextSize(1);
 
-  screen.drawBitmap(
-      0, 0,
-      displayInfo.outMode == OutMode::LINE_OUT ? lineout_bmp : speaker_bmp,
-      ICON_WIDTH, ICON_HEIGHT, 1);
+  screen.drawBitmap(0, 0,
+                    displayInfo.outMode == OutMode::LINE_OUT
+                        ? top_left_lineout_bmp
+                        : top_left_speaker_bmp,
+                    10, 10, 1);
 
   screen.setCursor(width - (TEXT_WIDTH * 3), 0);
   screen.print(displayInfo.tone);
@@ -42,33 +43,64 @@ void Display::playMode(DisplayInfo displayInfo) {
   screen.display();
 }
 
-void Display::chordMode(DisplayInfo displayInfo) {
+void Display::menuScreen(DisplayInfo displayInfo) {
+  int currentIdx = displayInfo.menuIdx;
+  int previousIdx = currentIdx - 1 < 0 ? MAX_MENU_ITEMS - 1 : currentIdx - 1;
+  int nextIdx = currentIdx + 1 >= MAX_MENU_ITEMS ? 0 : currentIdx + 1;
+
   screen.clearDisplay();
 
-  screen.fillRect(0, 0, width, height, SSD1306_WHITE);
-  screen.fillRect(1, (height / 2) - (TEXT_HEIGHT * 2), width - 2,
-                  TEXT_HEIGHT * 4, SSD1306_BLACK);
-
-  int middleX = (width / 2);
-  int middleY = (height / 2) - TEXT_HEIGHT;
-
   screen.setTextSize(1);
-  screen.setTextColor(SSD1306_BLACK);
-  screen.setCursor(middleX - (TEXT_WIDTH * 3) - 3, TEXT_HEIGHT);
-  screen.print("Escala");
-
-  screen.setTextSize(2);
   screen.setTextColor(SSD1306_WHITE);
-  screen.setCursor(middleX - TEXT_WIDTH * displayInfo.tone.length(), middleY);
-  screen.print(displayInfo.tone);
 
-  int leftX = middleX - (TEXT_WIDTH * (4 + displayInfo.tone.length()));
-  int rightX = middleX + (TEXT_WIDTH * (2 + displayInfo.tone.length()));
+  screen.drawBitmap(126, 0, scrollbar_bmp, 1, 62, 1);
+  screen.fillRect(125, 64 / MAX_MENU_ITEMS * currentIdx, 3, 64 / MAX_MENU_ITEMS,
+                  SSD1306_WHITE);
 
-  screen.drawBitmap(leftX, middleY + 3, arrow_left_bmp, ICON_WIDTH, ICON_HEIGHT,
-                    1);
-  screen.drawBitmap(rightX, middleY + 3, arrow_right_bmp, ICON_WIDTH,
-                    ICON_HEIGHT, 1);
+  screen.drawBitmap(4, 2, menuIcons[previousIdx], 16, 16, 1);
+  screen.setCursor(28, 6);
+  screen.print(menuLabels[previousIdx]);
+
+  screen.drawBitmap(0, 22, cursor_outline_bmp, 128, 21, 1);
+  screen.drawBitmap(4, 24, menuIcons[currentIdx], 16, 16, 1);
+  screen.setCursor(28, 28);
+  screen.print(menuLabels[currentIdx]);
+
+  screen.drawBitmap(4, 46, menuIcons[nextIdx], 16, 16, 1);
+  screen.setCursor(28, 50);
+  screen.print(menuLabels[nextIdx]);
+
+  // TODO: ADSR config
+  if (displayInfo.menuIdx == 0) {
+    screen.setCursor(89, 28);
+    screen.print("Long");
+    screen.drawBitmap(83, 28, arrow_left_bmp, 5, 7, 1);
+    screen.drawBitmap(113, 28, arrow_right_bmp, 5, 7, 1);
+  }
+
+  // Keynote
+  if (displayInfo.menuIdx == 1) {
+    screen.setCursor(100, 28);
+    screen.print(displayInfo.tone);
+    screen.drawBitmap(94, 28, arrow_left_bmp, 5, 7, 1);
+    screen.drawBitmap(113, 28, arrow_right_bmp, 5, 7, 1);
+  }
+
+  // TODO: Pitch config
+  if (displayInfo.menuIdx == 2) {
+    screen.setCursor(100, 28);
+    screen.print("+0");
+    screen.drawBitmap(94, 28, arrow_left_bmp, 5, 7, 1);
+    screen.drawBitmap(113, 28, arrow_right_bmp, 5, 7, 1);
+  }
+
+  // TODO: Oscillator config
+  if (displayInfo.menuIdx == 3) {
+    screen.setCursor(89, 28);
+    screen.print("Sawn");
+    screen.drawBitmap(83, 28, arrow_left_bmp, 5, 7, 1);
+    screen.drawBitmap(113, 28, arrow_right_bmp, 5, 7, 1);
+  }
 
   screen.display();
 }

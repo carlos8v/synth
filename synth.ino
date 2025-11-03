@@ -6,10 +6,10 @@ void displayScreen(void* parameter) {
     if (xSemaphoreTake(mutex_display, portMAX_DELAY) == pdTRUE) {
       switch (displayInfo.mode) {
         case SynthMode::PLAY_MODE:
-          display.playMode(displayInfo);
+          display.mainScreen(displayInfo);
           break;
-        case SynthMode::CHORD_MODE:
-          display.chordMode(displayInfo);
+        case SynthMode::MENU_MODE:
+          display.menuScreen(displayInfo);
           break;
         default:
           break;
@@ -74,6 +74,8 @@ void setup() {
   populateScale(currentScale, currentTone);
   chordToPlay = currentScale[0];
 
+  // Initial display config
+  displayInfo.menuIdx = 1;
   displayInfo.tone = String(getSemitoneLabel(currentTone).c_str());
   displayInfo.chord = String(chordToPlay->chord);
 
@@ -208,47 +210,59 @@ void playMode() {
 
   if (modPressed && modReleased) {
     lastChordIdx = 0;
-    currentMode = SynthMode::CHORD_MODE;
+    currentMode = SynthMode::MENU_MODE;
     modReleased = 0;
     delay(200);
   }
 }
 
-void chordMode() {
+void menuMode() {
   int x = analogRead(MOD_PIN_X);
   int y = analogRead(MOD_PIN_Y);
 
   AxisPosition axisPosition = axis.getPosition(x, y);
 
-  switch (axisPosition) {
-    case AxisPosition::AXIS_CENTER:
-      // Reset key press on axis centered
-      if (!keyReleased) {
-        keyReleased = 1;
-        delay(150);
-      }
-      break;
+  // Reset key press on axis centered
+  if (!keyReleased && axisPosition == AxisPosition::AXIS_CENTER) {
+    keyReleased = 1;
+    delay(150);
 
-    case AxisPosition::AXIS_LEFT:
-      if (keyReleased) {
-        keyReleased = 0;
+  // Handle menu change
+  } else if (keyReleased && (axisPosition == AxisPosition::AXIS_UP || axisPosition == AxisPosition::AXIS_DOWN)) {
+    keyReleased = 0;
+
+    if (axisPosition == AxisPosition::AXIS_UP) {
+      displayInfo.menuIdx -= 1;
+      if (displayInfo.menuIdx < 0) {
+        displayInfo.menuIdx = MAX_MENU_ITEMS - 1;
+      }
+    } else if (axisPosition == AxisPosition::AXIS_DOWN)  {
+      displayInfo.menuIdx += 1;
+      if (displayInfo.menuIdx >= MAX_MENU_ITEMS)  {
+        displayInfo.menuIdx = 0;
+      }
+    }
+
+    delay(150);
+
+  // Handle menu option change
+  } else if (keyReleased && (axisPosition == AxisPosition::AXIS_LEFT || axisPosition == AxisPosition::AXIS_RIGHT)) {
+    keyReleased = 0;
+
+    // TODO: handle other options
+    // Keynote
+    if (displayInfo.menuIdx == 1) {
+      if (axisPosition == AxisPosition::AXIS_LEFT) {
         currentTone = getPreviousSemitone(currentTone);
-        delay(150);
-      }
-      break;
-
-    case AxisPosition::AXIS_RIGHT:
-      if (keyReleased) {
-        keyReleased = 0;
+      } else if (axisPosition == AxisPosition::AXIS_RIGHT) {
         currentTone = getNextSemitone(currentTone);
-        delay(150);
       }
-      break;
-
-    default:
-      break;
+  
+      delay(150);
+    }
   }
 
+  // Change back to play mode
   int modPressed = digitalRead(MOD_KEY_PIN) == LOW;
   if (!modPressed && !modReleased) {
     modReleased = 1;
@@ -280,8 +294,8 @@ void loop() {
     case SynthMode::PLAY_MODE:
       playMode();
       break;
-    case SynthMode::CHORD_MODE:
-      chordMode();
+    case SynthMode::MENU_MODE:
+      menuMode();
     default:
       break;
   }
