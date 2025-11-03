@@ -110,6 +110,7 @@ typedef struct DisplayInfo {
   SynthMode mode;
   OutMode outMode;
   int menuIdx;
+  int pitch;
   String tone;
   String chord;
 } DisplayInfo;

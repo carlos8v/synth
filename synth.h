@@ -28,6 +28,7 @@ int modReleased = 1;
 int keyNotes[] = {0, 0, 0, 0, 0, 0, 0};
 int lastChordIdx = 0;
 int currentNote = 0;
+int currentPitch = 0;
 int keyReleased = 1;
 
 Semitone currentTone = Semitone::C;

@@ -86,10 +86,10 @@ void Display::menuScreen(DisplayInfo displayInfo) {
     screen.drawBitmap(113, 28, arrow_right_bmp, 5, 7, 1);
   }
 
-  // TODO: Pitch config
+  // Pitch
   if (displayInfo.menuIdx == 2) {
     screen.setCursor(100, 28);
-    screen.print("+0");
+    screen.print("+" + String(displayInfo.pitch));
     screen.drawBitmap(94, 28, arrow_left_bmp, 5, 7, 1);
     screen.drawBitmap(113, 28, arrow_right_bmp, 5, 7, 1);
   }
