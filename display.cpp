@@ -31,7 +31,7 @@ void Display::mainScreen(DisplayInfo displayInfo) {
                     10, 10, 1);
 
   screen.setCursor(width - (TEXT_WIDTH * 3), 0);
-  screen.print(displayInfo.tone);
+  screen.print(displayInfo.baseKey);
 
   int x = (width / 2) - displayInfo.chord.length() * TEXT_WIDTH - 1;
   int y = (height / 2) - TEXT_HEIGHT;
@@ -44,10 +44,7 @@ void Display::mainScreen(DisplayInfo displayInfo) {
 }
 
 char menuLabels[MAX_MENU_ITEMS][10] = {
-    "Keynote",
-    "Pitch",
-    "Oscil.",
-    "ADSR",
+    "Keynote", "Pitch", "Oscil.", "ADSR", "Filter",
 };
 
 String ADSRLabels[4] = {"Short", "Swell", "Long", "Sustain"};
@@ -83,7 +80,7 @@ void Display::menuScreen(DisplayInfo displayInfo) {
   // Keynote
   if (displayInfo.menuIdx == 0) {
     screen.setCursor(100, 28);
-    screen.print(displayInfo.tone);
+    screen.print(displayInfo.baseKey);
     screen.drawBitmap(94, 28, arrow_left_bmp, 5, 7, 1);
     screen.drawBitmap(113, 28, arrow_right_bmp, 5, 7, 1);
   }
@@ -116,6 +113,14 @@ void Display::menuScreen(DisplayInfo displayInfo) {
     screen.setCursor(adsrX, 28);
     screen.print(ADSRLabels[displayInfo.adsr]);
     screen.drawBitmap(adsrX - 6, 28, arrow_left_bmp, 5, 7, 1);
+    screen.drawBitmap(113, 28, arrow_right_bmp, 5, 7, 1);
+  }
+
+  // Filter
+  if (displayInfo.menuIdx == 4) {
+    screen.drawRect(90, 28, 20, 7, SSD1306_WHITE);
+    screen.fillRect(91, 29, map(displayInfo.filterCutoff, 0, 500, 0, 19), 6, SSD1306_WHITE);
+    screen.drawBitmap(83, 28, arrow_left_bmp, 5, 7, 1);
     screen.drawBitmap(113, 28, arrow_right_bmp, 5, 7, 1);
   }
 

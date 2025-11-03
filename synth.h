@@ -15,7 +15,7 @@ typedef enum {
   SINE_OSCI = 1,
   TRIANGLE_OSCI = 2,
   SQUARE_OSCI = 3,
-} Osci;
+} OSCI;
 
 #define MAX_ADSR 4
 
@@ -48,18 +48,22 @@ maxiEnv envelope;
 
 SynthMode currentMode = SynthMode::PLAY_MODE;
 
+int menuIdx = 0;
+int adsrOption = ADSR_OPTION::LONG;
+int pitch = 0;
+int osci = OSCI::SAWN_OSCI;
+int filterCutoff = 200;
+
 Axis axis(MOD_MAX_X, MOD_MAX_Y);
 int modReleased = 1;
 
 int keyNotes[] = {0, 0, 0, 0, 0, 0, 0};
 int lastChordIdx = 0;
-int currentADSR = ADSR_OPTION::LONG;
 int currentNote = 0;
-int currentPitch = 0;
 int keyReleased = 1;
 
-Semitone currentTone = Semitone::C;
-Chord* currentScale[7] = {NULL, NULL, NULL, NULL, NULL, NULL, NULL};
+Semitone baseKey = Semitone::C;
+Chord* scale[7] = {NULL, NULL, NULL, NULL, NULL, NULL, NULL};
 Chord* chordToPlay = NULL;
 
 #endif

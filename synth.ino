@@ -17,7 +17,7 @@ void displayScreen(void* parameter) {
 
       xSemaphoreGive(mutex_display);  // Release mutex
     }
-    vTaskDelay(pdMS_TO_TICKS(100));
+    vTaskDelay(pdMS_TO_TICKS(200));
   }
 }
 
@@ -35,9 +35,9 @@ void setup() {
   // Create the mutex for shared buffer access
   mutex_display = xSemaphoreCreateMutex();
 
-  // Create a FreeRTOS task to run on Core 0
+  // Create a FreeRTOS task to run on Core 1
   xTaskCreatePinnedToCore(displayScreen, "Display screen", 10000, NULL, 1, NULL,
-                          0);
+                          1);
 
   pinMode(KEY_1_PIN, INPUT_PULLUP);
   pinMode(KEY_2_PIN, INPUT_PULLUP);
@@ -53,10 +53,10 @@ void setup() {
   myClock.setTicksPerBeat(4);
   myClock.setTempo(100);
 
-  envelope.setAttack(ADSROptions[currentADSR][0]);
-  envelope.setDecay(ADSROptions[currentADSR][1]);
-  envelope.setSustain(ADSROptions[currentADSR][2]);
-  envelope.setRelease(ADSROptions[currentADSR][3]);
+  envelope.setAttack(ADSROptions[adsrOption][0]);
+  envelope.setDecay(ADSROptions[adsrOption][1]);
+  envelope.setSustain(ADSROptions[adsrOption][2]);
+  envelope.setRelease(ADSROptions[adsrOption][3]);
 
   auto cfg = out.defaultConfig(TX_MODE);
   cfg.is_master = true;       // ESP32 generates the clock
@@ -71,18 +71,19 @@ void setup() {
 
   // Initialize chords references
   setupChords();
-  populateScale(currentScale, currentTone, currentPitch);
-  chordToPlay = currentScale[0];
+  populateScale(scale, baseKey, pitch);
+  chordToPlay = scale[0];
 
   // Initial display config
   displayInfo.mode = currentMode;
-  displayInfo.tone = String(getSemitoneLabel(currentTone).c_str());
+  displayInfo.baseKey = String(getSemitoneLabel(baseKey).c_str());
   displayInfo.chord = String(chordToPlay->chord);
 
   displayInfo.menuIdx = 0;
-  displayInfo.adsr = currentADSR;
-  displayInfo.pitch = currentPitch;
-  displayInfo.osci = Osci::SAWN_OSCI;
+  displayInfo.adsr = adsrOption;
+  displayInfo.pitch = pitch;
+  displayInfo.osci = OSCI::SAWN_OSCI;
+  displayInfo.filterCutoff = filterCutoff;
 
   display.initConfig();
 }
@@ -105,10 +106,9 @@ double sawnChord(Chord* chord, double adsr) {
 
   out /= chord->keys;
 
-  // TODO: dynamic filter cutoff
   out = lowpass.lores(
-      out, adsr * (chord->frequencies[chord->keys - 1] + FILTER_CUTOFF), 1.0);
-  out = hipass.hires(out, adsr * (chord->frequencies[0] - FILTER_CUTOFF), 1.0);
+      out, adsr * (chord->frequencies[chord->keys - 1] + filterCutoff), 1.0);
+  out = hipass.hires(out, adsr * (chord->frequencies[0] - filterCutoff), 1.0);
 
   return out;
 }
@@ -148,21 +148,21 @@ double squareChord(Chord* chord) {
 
 void playChord(float* output, Chord* chord) {
   double out = 0;
-  double adsr = displayInfo.adsr == ADSR_OPTION::SUSTAIN
+  double adsr = adsrOption == ADSR_OPTION::SUSTAIN
                     ? 1.0
                     : envelope.adsr(1., !keyReleased);
 
-  switch (displayInfo.osci) {
-    case Osci::SAWN_OSCI:
+  switch (osci) {
+    case OSCI::SAWN_OSCI:
       out = sawnChord(chord, adsr);
       break;
-    case Osci::SINE_OSCI:
+    case OSCI::SINE_OSCI:
       out = sineChord(chord);
       break;
-    case Osci::TRIANGLE_OSCI:
+    case OSCI::TRIANGLE_OSCI:
       out = triangleChord(chord);
       break;
-    case Osci::SQUARE_OSCI:
+    case OSCI::SQUARE_OSCI:
       out = squareChord(chord);
       break;
   }
@@ -224,36 +224,36 @@ void checkKeyModifier() {
 
   switch (axisPosition) {
     case AxisPosition::AXIS_UP:
-      chordToPlay = currentScale[lastChordIdx]->major_minor;
+      chordToPlay = scale[lastChordIdx]->major_minor;
       break;
     case AxisPosition::AXIS_UP_RIGHT:
-      chordToPlay = currentScale[lastChordIdx]->seven;
+      chordToPlay = scale[lastChordIdx]->seven;
       break;
     case AxisPosition::AXIS_RIGHT:
-      chordToPlay = currentScale[lastChordIdx]->major7_minor7;
+      chordToPlay = scale[lastChordIdx]->major7_minor7;
       break;
     case AxisPosition::AXIS_DOWN_RIGHT:
-      chordToPlay = currentScale[lastChordIdx]->major9_minor9;
+      chordToPlay = scale[lastChordIdx]->major9_minor9;
       break;
     case AxisPosition::AXIS_DOWN:
-      chordToPlay = currentScale[lastChordIdx]->sus4;
+      chordToPlay = scale[lastChordIdx]->sus4;
       break;
     case AxisPosition::AXIS_DOWN_LEFT:
-      chordToPlay = currentScale[lastChordIdx]->sus2;
+      chordToPlay = scale[lastChordIdx]->sus2;
       break;
     case AxisPosition::AXIS_LEFT:
-      chordToPlay = currentScale[lastChordIdx]->dim;
+      chordToPlay = scale[lastChordIdx]->dim;
       break;
     case AxisPosition::AXIS_UP_LEFT:
-      chordToPlay = currentScale[lastChordIdx]->aug;
+      chordToPlay = scale[lastChordIdx]->aug;
       break;
     default:
-      chordToPlay = currentScale[lastChordIdx];
+      chordToPlay = scale[lastChordIdx];
       break;
   }
 
   if (chordToPlay == NULL) {
-    chordToPlay = currentScale[lastChordIdx];
+    chordToPlay = scale[lastChordIdx];
   }
 }
 
@@ -271,7 +271,6 @@ void playMode() {
   if (modPressed && modReleased) {
     lastChordIdx = 0;
     currentMode = SynthMode::MENU_MODE;
-    displayInfo.mode = SynthMode::MENU_MODE;
     modReleased = 0;
     delay(200);
   }
@@ -294,59 +293,59 @@ void menuMode() {
     keyReleased = 0;
 
     if (axisPosition == AxisPosition::AXIS_UP) {
-      displayInfo.menuIdx -= 1;
-      if (displayInfo.menuIdx < 0) {
-        displayInfo.menuIdx = MAX_MENU_ITEMS - 1;
+      menuIdx -= 1;
+      if (menuIdx < 0) {
+        menuIdx = MAX_MENU_ITEMS - 1;
       }
     } else if (axisPosition == AxisPosition::AXIS_DOWN) {
-      displayInfo.menuIdx += 1;
-      if (displayInfo.menuIdx >= MAX_MENU_ITEMS) {
-        displayInfo.menuIdx = 0;
+      menuIdx += 1;
+      if (menuIdx >= MAX_MENU_ITEMS) {
+        menuIdx = 0;
       }
     }
 
     delay(150);
 
     // Handle menu option change
-  } else if (keyReleased && (axisPosition == AxisPosition::AXIS_LEFT ||
-                             axisPosition == AxisPosition::AXIS_RIGHT)) {
-    keyReleased = 0;
-
+  } else if (axisPosition == AxisPosition::AXIS_LEFT ||
+             axisPosition == AxisPosition::AXIS_RIGHT) {
     // Keynote
-    if (displayInfo.menuIdx == 0) {
+    if (keyReleased && menuIdx == 0) {
+      keyReleased = 0;
       if (axisPosition == AxisPosition::AXIS_LEFT) {
-        currentTone = getPreviousSemitone(currentTone);
+        baseKey = getPreviousSemitone(baseKey);
       } else if (axisPosition == AxisPosition::AXIS_RIGHT) {
-        currentTone = getNextSemitone(currentTone);
+        baseKey = getNextSemitone(baseKey);
       }
 
       delay(150);
     }
 
     // Pitch
-    if (displayInfo.menuIdx == 1) {
+    if (keyReleased && menuIdx == 1) {
+      keyReleased = 0;
       if (axisPosition == AxisPosition::AXIS_LEFT) {
-        currentPitch = max(currentPitch - 1, -2);
+        pitch = max(pitch - 1, -2);
       } else if (axisPosition == AxisPosition::AXIS_RIGHT) {
-        currentPitch = min(currentPitch + 1, 2);
+        pitch = min(pitch + 1, 2);
       }
 
-      displayInfo.pitch = currentPitch;
       delay(150);
     }
 
     // Osci
-    if (displayInfo.menuIdx == 2) {
+    if (keyReleased && menuIdx == 2) {
+      keyReleased = 0;
       if (axisPosition == AxisPosition::AXIS_LEFT) {
-        displayInfo.osci -= 1;
-        if (displayInfo.osci < 0) {
-          displayInfo.osci = Osci::SQUARE_OSCI;
+        osci -= 1;
+        if (osci < 0) {
+          osci = OSCI::SQUARE_OSCI;
         }
 
       } else if (axisPosition == AxisPosition::AXIS_RIGHT) {
-        displayInfo.osci += 1;
-        if (displayInfo.osci >= MAX_OSCI) {
-          displayInfo.osci = Osci::SAWN_OSCI;
+        osci += 1;
+        if (osci >= MAX_OSCI) {
+          osci = OSCI::SAWN_OSCI;
         }
       }
 
@@ -354,26 +353,38 @@ void menuMode() {
     }
 
     // ADSR
-    if (displayInfo.menuIdx == 3) {
+    if (keyReleased && menuIdx == 3) {
+      keyReleased = 0;
       if (axisPosition == AxisPosition::AXIS_LEFT) {
-        displayInfo.adsr -= 1;
-        if (displayInfo.adsr < 0) {
-          displayInfo.adsr = ADSR_OPTION::SUSTAIN;
+        adsrOption -= 1;
+        if (adsrOption < 0) {
+          adsrOption = ADSR_OPTION::SUSTAIN;
         }
 
       } else if (axisPosition == AxisPosition::AXIS_RIGHT) {
-        displayInfo.adsr += 1;
-        if (displayInfo.adsr >= MAX_ADSR) {
-          displayInfo.adsr = ADSR_OPTION::SHORT;
+        adsrOption += 1;
+        if (adsrOption >= MAX_ADSR) {
+          adsrOption = ADSR_OPTION::SHORT;
         }
       }
 
-      envelope.setAttack(ADSROptions[displayInfo.adsr][0]);
-      envelope.setDecay(ADSROptions[displayInfo.adsr][1]);
-      envelope.setSustain(ADSROptions[displayInfo.adsr][2]);
-      envelope.setRelease(ADSROptions[displayInfo.adsr][3]);
+      envelope.setAttack(ADSROptions[adsrOption][0]);
+      envelope.setDecay(ADSROptions[adsrOption][1]);
+      envelope.setSustain(ADSROptions[adsrOption][2]);
+      envelope.setRelease(ADSROptions[adsrOption][3]);
 
       delay(150);
+    }
+
+    // Filter
+    if (menuIdx == 4) {
+      if (axisPosition == AxisPosition::AXIS_LEFT) {
+        filterCutoff = max(filterCutoff - 10, 0);
+      } else if (axisPosition == AxisPosition::AXIS_RIGHT) {
+        filterCutoff = min(filterCutoff + 10, 500);
+      }
+
+      delay(50);
     }
   }
 
@@ -385,22 +396,28 @@ void menuMode() {
 
   if (modPressed && modReleased) {
     modReleased = 0;
-    populateScale(currentScale, currentTone, currentPitch);
+    populateScale(scale, baseKey, pitch);
     delay(200);
 
     currentMode = SynthMode::PLAY_MODE;
-    displayInfo.mode = SynthMode::PLAY_MODE;
-    chordToPlay = currentScale[0];
+    chordToPlay = scale[0];
   }
 }
 
 void loop() {
   // Update the shared buffer safely
   if (xSemaphoreTake(mutex_display, portMAX_DELAY) == pdTRUE) {
+    displayInfo.mode = currentMode;
     displayInfo.outMode = digitalRead(OUT_MODE_PIN) == LOW ? OutMode::LINE_OUT
                                                            : OutMode::SPEAKERS;
-    displayInfo.tone = String(getSemitoneLabel(currentTone).c_str());
+    displayInfo.baseKey = String(getSemitoneLabel(baseKey).c_str());
     displayInfo.chord = String(chordToPlay->chord);
+
+    displayInfo.menuIdx = menuIdx;
+    displayInfo.adsr = adsrOption;
+    displayInfo.pitch = pitch;
+    displayInfo.osci = osci;
+    displayInfo.filterCutoff = filterCutoff;
 
     xSemaphoreGive(mutex_display);
   }

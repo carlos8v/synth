@@ -28,7 +28,7 @@ std::string getSemitoneLabel(Semitone semitone) {
     case Semitone::E:
       return "E";
     case Semitone::F:
-      return "E";
+      return "F";
     case Semitone::F_SHARP:
       return "F#";
     case Semitone::G:

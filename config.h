@@ -14,8 +14,6 @@
 #define I2S_WS_PIN 25
 #define I2S_DATA_PIN 27
 
-#define FILTER_CUTOFF 200
-
 #define KEY_1_PIN 5
 #define KEY_2_PIN 17
 #define KEY_3_PIN 18
