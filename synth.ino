@@ -51,7 +51,7 @@ void setup() {
   pinMode(OUT_MODE_PIN, INPUT_PULLUP);
 
   myClock.setTicksPerBeat(4);
-  myClock.setTempo(100);
+  myClock.setTempo(120);
 
   envelope.setAttack(ADSROptions[adsrOption][0]);
   envelope.setDecay(ADSROptions[adsrOption][1]);
@@ -100,15 +100,17 @@ void playArpeggio(float* output, Chord* chord) {
 double sawnChord(Chord* chord, double adsr) {
   double out = 0;
 
+  out += base.sawn(chord->frequencies[0] / 2);
   for (int i = 0; i < chord->keys; i++) {
     out += osc[i].sawn(chord->frequencies[i]);
   }
 
-  out /= chord->keys;
+  out /= chord->keys + 1;
 
   out = lowpass.lores(
       out, adsr * (chord->frequencies[chord->keys - 1] + filterCutoff), 1.0);
-  out = hipass.hires(out, adsr * (chord->frequencies[0] - filterCutoff), 1.0);
+  out = hipass.hires(out, adsr * ((chord->frequencies[0] / 2) - filterCutoff),
+                     1.0);
 
   return out;
 }

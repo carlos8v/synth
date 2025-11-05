@@ -28,10 +28,10 @@ typedef enum {
 
 // Options for Attack, Decay, Sustain, Release
 int ADSROptions[4][4] = {
-    {1, 100, 500, 200},    // SHORT
-    {800, 200, 500, 300},  // SWELL
-    {100, 200, 500, 800},  // LONG
-    {0, 0, 0, 0},          // SUSTAIN - ignore ADSR
+    {100, 200, 500, 200},   // SHORT
+    {1000, 100, 300, 400},  // SWELL
+    {100, 300, 500, 1000},  // LONG
+    {0, 0, 0, 0},           // SUSTAIN - ignore ADSR
 };
 
 Adafruit_SSD1306 screen(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
@@ -43,7 +43,7 @@ SemaphoreHandle_t mutex_display;
 I2SStream out;
 Maximilian maximilian(out);
 
-maxiOsc osc[5];
+maxiOsc osc[5], base;
 maxiClock myClock;
 maxiFilter hipass, lowpass;
 maxiEnv envelope;
