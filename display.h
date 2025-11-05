@@ -86,10 +86,13 @@ static const unsigned char PROGMEM filter_bmp[] = {
     0x04, 0x00, 0xfc, 0x20, 0x44, 0x00, 0x44, 0x20, 0xfc, 0x00, 0x04,
     0x20, 0x00, 0x03, 0x04, 0x24, 0xd0, 0x08, 0x24, 0x00, 0x00};
 
-#define MAX_MENU_ITEMS 5
+#define MAX_MENU_ITEMS 4
 
 static const unsigned char* menuIcons[] = {
-    keynote_bmp, pitch_bmp, oscillator_bmp, adsr_bmp, filter_bmp,
+    keynote_bmp,
+    pitch_bmp,
+    adsr_bmp,
+    filter_bmp,
 };
 
 typedef enum {
@@ -111,7 +114,6 @@ typedef struct DisplayInfo {
   int menuIdx;
   int adsr;
   int pitch;
-  int osci;
   int filterCutoff;
 } DisplayInfo;
 

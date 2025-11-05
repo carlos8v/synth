@@ -8,15 +8,6 @@
 #include "config.h"
 #include "display.h"
 
-#define MAX_OSCI 4
-
-typedef enum {
-  SAWN_OSCI = 0,
-  SINE_OSCI = 1,
-  TRIANGLE_OSCI = 2,
-  SQUARE_OSCI = 3,
-} OSCI;
-
 #define MAX_ADSR 4
 
 typedef enum {
@@ -53,7 +44,6 @@ SynthMode currentMode = SynthMode::PLAY_MODE;
 int menuIdx = 0;
 int adsrOption = ADSR_OPTION::LONG;
 int pitch = 0;
-int osci = OSCI::SAWN_OSCI;
 int filterCutoff = 200;
 
 Axis axis(MOD_MAX_X, MOD_MAX_Y);

@@ -53,11 +53,13 @@ void Display::mainScreen(DisplayInfo displayInfo) {
 }
 
 char menuLabels[MAX_MENU_ITEMS][10] = {
-    "Keynote", "Pitch", "Oscil.", "ADSR", "Filter",
+    "Keynote",
+    "Pitch",
+    "ADSR",
+    "Filter",
 };
 
 String ADSRLabels[4] = {"Short", "Swell", "Long", "Sustain"};
-String osciLabels[4] = {"Sawn", "Sine", "Trian.", "Squar."};
 
 void Display::menuScreen(DisplayInfo displayInfo) {
   // Update last info
@@ -104,18 +106,8 @@ void Display::menuScreen(DisplayInfo displayInfo) {
     screen->drawBitmap(94, 28, arrow_left_bmp, 5, 7, 1);
     screen->drawBitmap(113, 28, arrow_right_bmp, 5, 7, 1);
 
-    // Oscillator
-  } else if (displayInfo.menuIdx == 2) {
-    int len = osciLabels[displayInfo.osci].length();
-    int osciX = 113 - (len * TEXT_WIDTH) - (len + 1);
-
-    screen->setCursor(osciX, 28);
-    screen->print(osciLabels[displayInfo.osci]);
-    screen->drawBitmap(osciX - 6, 28, arrow_left_bmp, 5, 7, 1);
-    screen->drawBitmap(113, 28, arrow_right_bmp, 5, 7, 1);
-
     // ADSR
-  } else if (displayInfo.menuIdx == 3) {
+  } else if (displayInfo.menuIdx == 2) {
     int len = ADSRLabels[displayInfo.adsr].length();
     int adsrX = 113 - (len * TEXT_WIDTH) - (len + 1);
 
@@ -125,7 +117,7 @@ void Display::menuScreen(DisplayInfo displayInfo) {
     screen->drawBitmap(113, 28, arrow_right_bmp, 5, 7, 1);
 
     // Filter
-  } else if (displayInfo.menuIdx == 4) {
+  } else if (displayInfo.menuIdx == 3) {
     screen->drawRect(90, 28, 20, 7, SSD1306_WHITE);
     screen->fillRect(91, 29, map(displayInfo.filterCutoff, 0, 500, 0, 19), 6,
                      SSD1306_WHITE);

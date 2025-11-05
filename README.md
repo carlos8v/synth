@@ -22,9 +22,10 @@ Criar um sintetizador simples e portátil.
 
 ## Funcionalidades
 
+- Ajuste de escala maior
 - Ajuste de pitch
-- Ajuste de osciladores (sawn, sine, triangle, square)
 - Ajuste de ADSR
+- Ajuste de filtro (lowpass, hipass)
 
 ## Modificador
 

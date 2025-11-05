@@ -82,7 +82,6 @@ void setup() {
   displayInfo.menuIdx = 0;
   displayInfo.adsr = adsrOption;
   displayInfo.pitch = pitch;
-  displayInfo.osci = OSCI::SAWN_OSCI;
   displayInfo.filterCutoff = filterCutoff;
 
   display.initConfig();
@@ -97,8 +96,11 @@ void playArpeggio(float* output, Chord* chord) {
   output[0] = output[1] = filtered * adsr;
 }
 
-double sawnChord(Chord* chord, double adsr) {
+void playChord(float* output, Chord* chord) {
   double out = 0;
+  double adsr = adsrOption == ADSR_OPTION::SUSTAIN
+                    ? 1.0
+                    : envelope.adsr(1., !keyReleased);
 
   out += base.sawn(chord->frequencies[0] / 2);
   for (int i = 0; i < chord->keys; i++) {
@@ -111,63 +113,6 @@ double sawnChord(Chord* chord, double adsr) {
       out, adsr * (chord->frequencies[chord->keys - 1] + filterCutoff), 1.0);
   out = hipass.hires(out, adsr * ((chord->frequencies[0] / 2) - filterCutoff),
                      1.0);
-
-  return out;
-}
-
-double sineChord(Chord* chord) {
-  double out = 0;
-
-  for (int i = 0; i < chord->keys; i++) {
-    out += osc[i].sinewave(chord->frequencies[i]);
-  }
-
-  out /= chord->keys;
-  return out;
-}
-
-double triangleChord(Chord* chord) {
-  double out = 0;
-
-  for (int i = 0; i < chord->keys; i++) {
-    out += osc[i].triangle(chord->frequencies[i]);
-  }
-
-  out /= chord->keys;
-  return out;
-}
-
-double squareChord(Chord* chord) {
-  double out = 0;
-
-  for (int i = 0; i < chord->keys; i++) {
-    out += osc[i].square(chord->frequencies[i]);
-  }
-
-  out /= chord->keys;
-  return out;
-}
-
-void playChord(float* output, Chord* chord) {
-  double out = 0;
-  double adsr = adsrOption == ADSR_OPTION::SUSTAIN
-                    ? 1.0
-                    : envelope.adsr(1., !keyReleased);
-
-  switch (osci) {
-    case OSCI::SAWN_OSCI:
-      out = sawnChord(chord, adsr);
-      break;
-    case OSCI::SINE_OSCI:
-      out = sineChord(chord);
-      break;
-    case OSCI::TRIANGLE_OSCI:
-      out = triangleChord(chord);
-      break;
-    case OSCI::SQUARE_OSCI:
-      out = squareChord(chord);
-      break;
-  }
 
   output[0] = output[1] = out * adsr;
 }
@@ -335,27 +280,8 @@ void menuMode() {
       delay(150);
     }
 
-    // Osci
-    if (keyReleased && menuIdx == 2) {
-      keyReleased = 0;
-      if (axisPosition == AxisPosition::AXIS_LEFT) {
-        osci -= 1;
-        if (osci < 0) {
-          osci = OSCI::SQUARE_OSCI;
-        }
-
-      } else if (axisPosition == AxisPosition::AXIS_RIGHT) {
-        osci += 1;
-        if (osci >= MAX_OSCI) {
-          osci = OSCI::SAWN_OSCI;
-        }
-      }
-
-      delay(150);
-    }
-
     // ADSR
-    if (keyReleased && menuIdx == 3) {
+    if (keyReleased && menuIdx == 2) {
       keyReleased = 0;
       if (axisPosition == AxisPosition::AXIS_LEFT) {
         adsrOption -= 1;
@@ -379,7 +305,7 @@ void menuMode() {
     }
 
     // Filter
-    if (menuIdx == 4) {
+    if (menuIdx == 3) {
       if (axisPosition == AxisPosition::AXIS_LEFT) {
         filterCutoff = max(filterCutoff - 10, 0);
       } else if (axisPosition == AxisPosition::AXIS_RIGHT) {
@@ -418,7 +344,6 @@ void loop() {
     displayInfo.menuIdx = menuIdx;
     displayInfo.adsr = adsrOption;
     displayInfo.pitch = pitch;
-    displayInfo.osci = osci;
     displayInfo.filterCutoff = filterCutoff;
 
     xSemaphoreGive(mutex_display);
