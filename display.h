@@ -126,7 +126,7 @@ class Display {
   Display(Adafruit_SSD1306* screen);
 
   bool begin(uint8_t address);
-  void initConfig(DisplayInfo displayInfo);
+  void initConfig();
 
   void mainScreen(DisplayInfo displayInfo);
   void menuScreen(DisplayInfo displayInfo);

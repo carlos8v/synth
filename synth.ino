@@ -85,7 +85,7 @@ void setup() {
   displayInfo.osci = OSCI::SAWN_OSCI;
   displayInfo.filterCutoff = filterCutoff;
 
-  display.initConfig(displayInfo);
+  display.initConfig();
 }
 
 void playArpeggio(float* output, Chord* chord) {

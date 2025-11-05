@@ -10,9 +10,7 @@ bool Display::begin(uint8_t address) {
   return screen->begin(SSD1306_SWITCHCAPVCC, address);
 }
 
-void Display::initConfig(DisplayInfo displayInfo) {
-  lastInfo = displayInfo;
-
+void Display::initConfig() {
   screen->clearDisplay();
   screen->setTextSize(1);
   screen->setTextColor(SSD1306_WHITE);
