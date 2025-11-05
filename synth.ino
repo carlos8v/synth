@@ -102,17 +102,22 @@ void playChord(float* output, Chord* chord) {
                     ? 1.0
                     : envelope.adsr(1., !keyReleased);
 
-  out += base.sawn(chord->frequencies[0] / 2);
+  double baseFreq = chord->frequencies[0] / 2;
+  out += base.sawn(baseFreq);
+
   for (int i = 0; i < chord->keys; i++) {
-    out += osc[i].sawn(chord->frequencies[i]);
+    if (i == 0) {
+      out += osc[i].sawn(chord->frequencies[i] + lfo.sinebuf(0.2));
+    } else {
+      out += osc[i].sawn(chord->frequencies[i]);
+    }
   }
 
   out /= chord->keys + 1;
 
   out = lowpass.lores(
       out, adsr * (chord->frequencies[chord->keys - 1] + filterCutoff), 1.0);
-  out = hipass.hires(out, adsr * ((chord->frequencies[0] / 2) - filterCutoff),
-                     1.0);
+  out = hipass.hires(out, adsr * (baseFreq - filterCutoff), 1.0);
 
   output[0] = output[1] = out * adsr;
 }
@@ -333,6 +338,16 @@ void menuMode() {
 }
 
 void loop() {
+  switch (currentMode) {
+    case SynthMode::PLAY_MODE:
+      playMode();
+      break;
+    case SynthMode::MENU_MODE:
+      menuMode();
+    default:
+      break;
+  }
+
   // Update the shared buffer safely
   if (xSemaphoreTake(mutex_display, portMAX_DELAY) == pdTRUE) {
     displayInfo.mode = currentMode;
@@ -347,15 +362,5 @@ void loop() {
     displayInfo.filterCutoff = filterCutoff;
 
     xSemaphoreGive(mutex_display);
-  }
-
-  switch (currentMode) {
-    case SynthMode::PLAY_MODE:
-      playMode();
-      break;
-    case SynthMode::MENU_MODE:
-      menuMode();
-    default:
-      break;
   }
 }
