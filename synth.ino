@@ -17,7 +17,7 @@ void displayScreen(void* parameter) {
 
       xSemaphoreGive(mutex_display);  // Release mutex
     }
-    vTaskDelay(pdMS_TO_TICKS(300));
+    vTaskDelay(pdMS_TO_TICKS(100));
   }
 }
 
@@ -85,7 +85,7 @@ void setup() {
   displayInfo.osci = OSCI::SAWN_OSCI;
   displayInfo.filterCutoff = filterCutoff;
 
-  display.initConfig();
+  display.initConfig(displayInfo);
 }
 
 void playArpeggio(float* output, Chord* chord) {

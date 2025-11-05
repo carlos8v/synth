@@ -10,7 +10,9 @@ bool Display::begin(uint8_t address) {
   return screen->begin(SSD1306_SWITCHCAPVCC, address);
 }
 
-void Display::initConfig(void) {
+void Display::initConfig(DisplayInfo displayInfo) {
+  lastInfo = displayInfo;
+
   screen->clearDisplay();
   screen->setTextSize(1);
   screen->setTextColor(SSD1306_WHITE);
@@ -18,6 +20,18 @@ void Display::initConfig(void) {
 }
 
 void Display::mainScreen(DisplayInfo displayInfo) {
+  // Prevent redraw of the same content
+  if (displayInfo.chord == lastInfo.chord &&
+      displayInfo.outMode == lastInfo.outMode &&
+      displayInfo.mode == lastInfo.mode) {
+    return;
+  }
+
+  // Update last info
+  lastInfo.mode = displayInfo.mode;
+  lastInfo.outMode = displayInfo.outMode;
+  lastInfo.chord = displayInfo.chord;
+
   screen->clearDisplay();
   screen->setTextSize(1);
 
@@ -48,6 +62,9 @@ String ADSRLabels[4] = {"Short", "Swell", "Long", "Sustain"};
 String osciLabels[4] = {"Sawn", "Sine", "Trian.", "Squar."};
 
 void Display::menuScreen(DisplayInfo displayInfo) {
+  // Update last info
+  lastInfo.mode = displayInfo.mode;
+
   int currentIdx = displayInfo.menuIdx;
   int previousIdx = currentIdx - 1 < 0 ? MAX_MENU_ITEMS - 1 : currentIdx - 1;
   int nextIdx = currentIdx + 1 >= MAX_MENU_ITEMS ? 0 : currentIdx + 1;
@@ -81,7 +98,7 @@ void Display::menuScreen(DisplayInfo displayInfo) {
     screen->drawBitmap(94, 28, arrow_left_bmp, 5, 7, 1);
     screen->drawBitmap(113, 28, arrow_right_bmp, 5, 7, 1);
 
-  // Pitch
+    // Pitch
   } else if (displayInfo.menuIdx == 1) {
     screen->setCursor(100, 28);
     screen->print(String(displayInfo.pitch >= 0 ? '+' : '-') +
@@ -89,7 +106,7 @@ void Display::menuScreen(DisplayInfo displayInfo) {
     screen->drawBitmap(94, 28, arrow_left_bmp, 5, 7, 1);
     screen->drawBitmap(113, 28, arrow_right_bmp, 5, 7, 1);
 
-  // Oscillator
+    // Oscillator
   } else if (displayInfo.menuIdx == 2) {
     int len = osciLabels[displayInfo.osci].length();
     int osciX = 113 - (len * TEXT_WIDTH) - (len + 1);
@@ -99,7 +116,7 @@ void Display::menuScreen(DisplayInfo displayInfo) {
     screen->drawBitmap(osciX - 6, 28, arrow_left_bmp, 5, 7, 1);
     screen->drawBitmap(113, 28, arrow_right_bmp, 5, 7, 1);
 
-  // ADSR
+    // ADSR
   } else if (displayInfo.menuIdx == 3) {
     int len = ADSRLabels[displayInfo.adsr].length();
     int adsrX = 113 - (len * TEXT_WIDTH) - (len + 1);
@@ -109,7 +126,7 @@ void Display::menuScreen(DisplayInfo displayInfo) {
     screen->drawBitmap(adsrX - 6, 28, arrow_left_bmp, 5, 7, 1);
     screen->drawBitmap(113, 28, arrow_right_bmp, 5, 7, 1);
 
-  // Filter
+    // Filter
   } else if (displayInfo.menuIdx == 4) {
     screen->drawRect(90, 28, 20, 7, SSD1306_WHITE);
     screen->fillRect(91, 29, map(displayInfo.filterCutoff, 0, 500, 0, 19), 6,
