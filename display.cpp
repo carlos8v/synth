@@ -1,6 +1,7 @@
 #include "display.h"
 
 Display::Display(Adafruit_SSD1306* _screen) {
+  shouldDraw = true;
   screen = _screen;
   width = _screen->width();
   height = _screen->height();
@@ -10,46 +11,85 @@ bool Display::begin(uint8_t address) {
   return screen->begin(SSD1306_SWITCHCAPVCC, address);
 }
 
-void Display::initConfig() {
-  screen->clearDisplay();
+void Display::initConfig(DisplayInfo displayInfo) {
   screen->setTextSize(1);
   screen->setTextColor(SSD1306_WHITE);
   screen->cp437(true);
+
+  // Draw first screen
+  shouldDraw = true;
+  mainScreen(displayInfo);
 }
 
 void Display::mainScreen(DisplayInfo displayInfo) {
-  // Prevent redraw of the same content
-  if (displayInfo.chord == lastInfo.chord &&
-      displayInfo.outMode == lastInfo.outMode &&
-      displayInfo.mode == lastInfo.mode) {
+  // First draw or redraw whole screen on mode change
+  if (shouldDraw || displayInfo.mode != lastInfo.mode) {
+    shouldDraw = false;
+    lastInfo.mode = displayInfo.mode;
+    lastInfo.outMode = displayInfo.outMode;
+    lastInfo.chord = displayInfo.chord;
+
+    screen->clearDisplay();
+
+    // Base key
+    screen->setTextSize(1);
+    screen->setCursor(width - (TEXT_WIDTH * 3), 0);
+    screen->print(displayInfo.baseKey);
+
+    // Out mode icon
+    screen->drawBitmap(0, 0,
+                       displayInfo.outMode == OutMode::LINE_OUT
+                           ? top_left_lineout_bmp
+                           : top_left_speaker_bmp,
+                       10, 10, 1);
+
+    // Chord
+    int len = displayInfo.chord.length();
+    int x = (width / 2) - len * TEXT_WIDTH - (len + 1);
+    int y = (height / 2) - TEXT_HEIGHT;
+
+    screen->setCursor(x, y);
+    screen->setTextSize(2);
+    screen->print(displayInfo.chord);
+
+    screen->display();
     return;
   }
 
-  // Update last info
-  lastInfo.mode = displayInfo.mode;
-  lastInfo.outMode = displayInfo.outMode;
-  lastInfo.chord = displayInfo.chord;
+  // Update only out mode icon
+  if (displayInfo.outMode != lastInfo.outMode) {
+    shouldDraw = 1;
+    lastInfo.outMode = displayInfo.outMode;
 
-  screen->clearDisplay();
-  screen->setTextSize(1);
+    screen->fillRect(0, 0, 10, 10, SSD1306_BLACK);  // Clear last icon
+    screen->drawBitmap(0, 0,
+                       displayInfo.outMode == OutMode::LINE_OUT
+                           ? top_left_lineout_bmp
+                           : top_left_speaker_bmp,
+                       10, 10, 1);
+  }
 
-  screen->drawBitmap(0, 0,
-                     displayInfo.outMode == OutMode::LINE_OUT
-                         ? top_left_lineout_bmp
-                         : top_left_speaker_bmp,
-                     10, 10, 1);
+  // Update only chord
+  if (!displayInfo.chord.equalsIgnoreCase(lastInfo.chord)) {
+    shouldDraw = 1;
+    lastInfo.chord = displayInfo.chord;
 
-  screen->setCursor(width - (TEXT_WIDTH * 3), 0);
-  screen->print(displayInfo.baseKey);
+    int len = displayInfo.chord.length();
+    int x = (width / 2) - len * TEXT_WIDTH - (len + 1);
+    int y = (height / 2) - TEXT_HEIGHT;
 
-  int x = (width / 2) - displayInfo.chord.length() * TEXT_WIDTH - 1;
-  int y = (height / 2) - TEXT_HEIGHT;
+    // Clear last chord
+    screen->fillRect(0, y, width, TEXT_HEIGHT * 2, SSD1306_BLACK);
 
-  screen->setCursor(x, y);
-  screen->setTextSize(2);
-  screen->print(displayInfo.chord);
+    screen->setCursor(x, y);
+    screen->setTextSize(2);
+    screen->print(displayInfo.chord);
+  }
 
-  screen->display();
+  if (shouldDraw) {
+    shouldDraw = false;
+    screen->display();
+  }
 }
 
 char menuLabels[MAX_MENU_ITEMS][10] = {

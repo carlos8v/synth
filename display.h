@@ -123,12 +123,13 @@ class Display {
   DisplayInfo lastInfo;
   uint8_t width;
   uint8_t height;
+  bool shouldDraw;
 
  public:
   Display(Adafruit_SSD1306* screen);
 
   bool begin(uint8_t address);
-  void initConfig();
+  void initConfig(DisplayInfo displayInfo);
 
   void mainScreen(DisplayInfo displayInfo);
   void menuScreen(DisplayInfo displayInfo);
