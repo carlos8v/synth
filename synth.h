@@ -34,8 +34,9 @@ SemaphoreHandle_t mutex_display;
 I2SStream out;
 Maximilian maximilian(out);
 
+// TODO: handle clock
+// maxiClock myClock;
 maxiOsc osc[5], base, lfo;
-maxiClock myClock;
 maxiFilter hipass, lowpass;
 maxiEnv envelope;
 

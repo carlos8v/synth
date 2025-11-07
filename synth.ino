@@ -50,8 +50,9 @@ void setup() {
   pinMode(MOD_KEY_PIN, INPUT_PULLUP);
   pinMode(OUT_MODE_PIN, INPUT_PULLUP);
 
-  myClock.setTicksPerBeat(4);
-  myClock.setTempo(120);
+  // TODO: handle clock
+  // myClock.setTicksPerBeat(4);
+  // myClock.setTempo(120);
 
   envelope.setAttack(ADSROptions[adsrOption][0]);
   envelope.setDecay(ADSROptions[adsrOption][1]);
@@ -98,9 +99,15 @@ void playArpeggio(float* output, Chord* chord) {
 
 void playChord(float* output, Chord* chord) {
   double out = 0;
-  double adsr = adsrOption == ADSR_OPTION::SUSTAIN
-                    ? 1.0
-                    : envelope.adsr(1., !keyReleased);
+  double adsr;
+
+  if (adsrOption == ADSR_OPTION::SUSTAIN) {
+    adsr = 1.0;
+  } else if (currentMode == SynthMode::PLAY_MODE) {
+    adsr = envelope.adsr(1.0, !keyReleased);
+  } else {
+    adsr = 0.0;
+  }
 
   double baseFreq = chord->frequencies[0] / 2;
   out += base.sawn(baseFreq);
@@ -123,14 +130,13 @@ void playChord(float* output, Chord* chord) {
 }
 
 void play(float* output) {
-  myClock.ticker();  // Advance clock
+  // TODO: handle clock
+  // myClock.ticker();  // Advance clock
 
-  if (myClock.tick) {
-    // For arpeggios
-    currentNote = (currentNote + 1) % 3;  // Cycle through notes 0–3
-  }
-
-  if (currentMode != SynthMode::PLAY_MODE) return;
+  // if (myClock.tick) {
+  //   // For arpeggios
+  //   currentNote = (currentNote + 1) % 3;  // Cycle through notes 0–3
+  // }
 
   if (lastChordIdx >= 0) {
     // Sustain chord
@@ -245,15 +251,9 @@ void menuMode() {
     keyReleased = 0;
 
     if (axisPosition == AxisPosition::AXIS_UP) {
-      menuIdx -= 1;
-      if (menuIdx < 0) {
-        menuIdx = MAX_MENU_ITEMS - 1;
-      }
+      menuIdx = menuIdx - 1 >= 0 ? (menuIdx - 1) : MAX_MENU_ITEMS - 1;
     } else if (axisPosition == AxisPosition::AXIS_DOWN) {
-      menuIdx += 1;
-      if (menuIdx >= MAX_MENU_ITEMS) {
-        menuIdx = 0;
-      }
+      menuIdx = (menuIdx + 1) % MAX_MENU_ITEMS;
     }
 
     delay(150);

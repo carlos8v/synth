@@ -79,7 +79,7 @@ void Display::mainScreen(DisplayInfo displayInfo) {
     int y = (height / 2) - TEXT_HEIGHT;
 
     // Clear last chord
-    screen->fillRect(0, y, width, TEXT_HEIGHT * 2, SSD1306_BLACK);
+    screen->fillRect(0, y, width, TEXT_HEIGHT * 2 + 2, SSD1306_BLACK);
 
     screen->setCursor(x, y);
     screen->setTextSize(2);
