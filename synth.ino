@@ -67,6 +67,8 @@ void setup() {
   cfg.sample_rate = 32000;
   cfg.buffer_size = 512;
 
+  maxiSettings::setup(32000, 2, 512);
+
   out.begin(cfg);
   maximilian.begin(cfg);
 

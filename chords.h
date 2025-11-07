@@ -37,7 +37,7 @@ typedef struct SemitoneListItem {
 typedef struct Chord {
   char chord[10];
   int keys;
-  double frequencies[5];
+  float frequencies[5];
 
   Chord* major_minor;
   Chord* seven;

@@ -62,16 +62,16 @@ void advanceSemitone(SemitoneListItem** base, int steps) {
   }
 }
 
-double calcFrequency(double semitonesDist) {
-  double exp = semitonesDist / 12.0;
+float calcFrequency(int semitonesDist) {
+  float exp = semitonesDist / 12.0;
   return A_3_BASE_FREQ * pow(2, exp);
 }
 
-Chord* makeChord(std::string chord, std::initializer_list<double> frequencies) {
+Chord* makeChord(std::string chord, std::initializer_list<float> frequencies) {
   Chord* newChord = (Chord*)malloc(sizeof(Chord));
 
   int keys = 0;
-  for (double freq : frequencies) {
+  for (float freq : frequencies) {
     newChord->frequencies[keys] = freq;
     keys++;
   }
@@ -99,27 +99,27 @@ Chord* makeThreeKeyChord(std::string chord, Semitone destTone, int firstStep,
   SemitoneListItem* firstTone = firstSemitone;
   getSemitone(&firstTone, destTone);
 
-  double firstDistance =
+  int firstDistance =
       firstTone->tone + (pitchPrefix * 12.0) - baseSemitone->tone;
-  double firstFreq = calcFrequency(firstDistance);
+  float firstFreq = calcFrequency(firstDistance);
 
   SemitoneListItem* secondTone = firstTone;
   advanceSemitone(&secondTone, firstStep);
 
   pitchPrefix =
       firstTone->tone + firstStep >= 12 ? (pitchPrefix + 1) : pitchPrefix;
-  double secondDistance =
+  int secondDistance =
       secondTone->tone + (pitchPrefix * 12.0) - baseSemitone->tone;
-  double secondFreq = calcFrequency(secondDistance);
+  float secondFreq = calcFrequency(secondDistance);
 
   SemitoneListItem* thirdTone = secondTone;
   advanceSemitone(&thirdTone, secondStep);
 
   pitchPrefix =
       secondTone->tone + secondStep >= 12 ? (pitchPrefix + 1) : pitchPrefix;
-  double thirdDistance =
+  int thirdDistance =
       thirdTone->tone + (pitchPrefix * 12.0) - baseSemitone->tone;
-  double thridFreq = calcFrequency(thirdDistance);
+  float thridFreq = calcFrequency(thirdDistance);
 
   return makeChord(chord, {firstFreq, secondFreq, thridFreq});
 }
@@ -133,7 +133,7 @@ Chord* makeFourKeyChord(std::string chord, Semitone destTone, int firstStep,
 
   int firstDistance =
       firstTone->tone + (pitchPrefix * 12.0) - baseSemitone->tone;
-  double firstFreq = calcFrequency(firstDistance);
+  float firstFreq = calcFrequency(firstDistance);
 
   SemitoneListItem* secondTone = firstTone;
   advanceSemitone(&secondTone, firstStep);
@@ -142,7 +142,7 @@ Chord* makeFourKeyChord(std::string chord, Semitone destTone, int firstStep,
       firstTone->tone + firstStep >= 12 ? (pitchPrefix + 1) : pitchPrefix;
   int secondDistance =
       secondTone->tone + (pitchPrefix * 12.0) - baseSemitone->tone;
-  double secondFreq = calcFrequency(secondDistance);
+  float secondFreq = calcFrequency(secondDistance);
 
   SemitoneListItem* thirdTone = secondTone;
   advanceSemitone(&thirdTone, secondStep);
@@ -151,7 +151,7 @@ Chord* makeFourKeyChord(std::string chord, Semitone destTone, int firstStep,
       secondTone->tone + secondStep >= 12 ? (pitchPrefix + 1) : pitchPrefix;
   int thirdDistance =
       thirdTone->tone + (pitchPrefix * 12.0) - baseSemitone->tone;
-  double thridFreq = calcFrequency(thirdDistance);
+  float thridFreq = calcFrequency(thirdDistance);
 
   SemitoneListItem* fourthTone = thirdTone;
   advanceSemitone(&fourthTone, thirdStep);
@@ -160,7 +160,7 @@ Chord* makeFourKeyChord(std::string chord, Semitone destTone, int firstStep,
       thirdTone->tone + thirdStep >= 12 ? (pitchPrefix + 1) : pitchPrefix;
   int fourthDistance =
       fourthTone->tone + (pitchPrefix * 12.0) - baseSemitone->tone;
-  double fourfhFreq = calcFrequency(fourthDistance);
+  float fourfhFreq = calcFrequency(fourthDistance);
 
   return makeChord(chord, {firstFreq, secondFreq, thridFreq, fourfhFreq});
 }
@@ -175,7 +175,7 @@ Chord* makeFiveKeyChord(std::string chord, Semitone destTone, int firstStep,
 
   int firstDistance =
       firstTone->tone + (pitchPrefix * 12.0) - baseSemitone->tone;
-  double firstFreq = calcFrequency(firstDistance);
+  float firstFreq = calcFrequency(firstDistance);
 
   SemitoneListItem* secondTone = firstTone;
   advanceSemitone(&secondTone, firstStep);
@@ -184,7 +184,7 @@ Chord* makeFiveKeyChord(std::string chord, Semitone destTone, int firstStep,
       firstTone->tone + firstStep >= 12 ? (pitchPrefix + 1) : pitchPrefix;
   int secondDistance =
       secondTone->tone + (pitchPrefix * 12.0) - baseSemitone->tone;
-  double secondFreq = calcFrequency(secondDistance);
+  float secondFreq = calcFrequency(secondDistance);
 
   SemitoneListItem* thirdTone = secondTone;
   advanceSemitone(&thirdTone, secondStep);
@@ -193,7 +193,7 @@ Chord* makeFiveKeyChord(std::string chord, Semitone destTone, int firstStep,
       secondTone->tone + secondStep >= 12 ? (pitchPrefix + 1) : pitchPrefix;
   int thirdDistance =
       thirdTone->tone + (pitchPrefix * 12.0) - baseSemitone->tone;
-  double thridFreq = calcFrequency(thirdDistance);
+  float thridFreq = calcFrequency(thirdDistance);
 
   SemitoneListItem* fourthTone = thirdTone;
   advanceSemitone(&fourthTone, thirdStep);
@@ -202,7 +202,7 @@ Chord* makeFiveKeyChord(std::string chord, Semitone destTone, int firstStep,
       thirdTone->tone + thirdStep >= 12 ? (pitchPrefix + 1) : pitchPrefix;
   int fourthDistance =
       fourthTone->tone + (pitchPrefix * 12.0) - baseSemitone->tone;
-  double fourfhFreq = calcFrequency(fourthDistance);
+  float fourfhFreq = calcFrequency(fourthDistance);
 
   SemitoneListItem* fifthTone = fourthTone;
   advanceSemitone(&fifthTone, fourthStep);
@@ -211,7 +211,7 @@ Chord* makeFiveKeyChord(std::string chord, Semitone destTone, int firstStep,
       fourthTone->tone + fourthStep >= 12 ? (pitchPrefix + 1) : pitchPrefix;
   int fifthDistance =
       fifthTone->tone + (pitchPrefix * 12.0) - baseSemitone->tone;
-  double fifthFreq = calcFrequency(fifthDistance);
+  float fifthFreq = calcFrequency(fifthDistance);
 
   return makeChord(chord,
                    {firstFreq, secondFreq, thridFreq, fourfhFreq, fifthFreq});
