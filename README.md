@@ -36,8 +36,8 @@ Dependendo da direção do analógico o tom do acorde pode mudar:
 | Base           | Base          | `Cmaj`  |
 | Cima           | Maior/menor   | `Cmin`  |
 | Cima Direita   | Sétima        |  `C7`   |
-| Direita        | Maior7/menor7 | `Cmin7` |
-| Baixo Direita  | Maior9/menor9 | `Cmin9` |
+| Direita        | Maior7/menor7 | `Cmaj7` |
+| Baixo Direita  | Maior9/menor9 | `Cmaj9` |
 | Baixo          | Suspenso4     | `Csus4` |
 | Baixo Esquerda | Suspenso2     | `Csus2` |
 | Esquerda       | Diminuto      | `Cdim`  |

@@ -221,6 +221,10 @@ Chord* makeMajorChord(std::string chord, Semitone destTone, int higherOctave) {
   return makeThreeKeyChord(chord, destTone, 4, 3, higherOctave);
 }
 
+Chord* make7Chord(std::string chord, Semitone destTone, int higherOctave) {
+  return makeFourKeyChord(chord, destTone, 4, 3, 3, higherOctave);
+}
+
 Chord* makeMajor7Chord(std::string chord, Semitone destTone, int higherOctave) {
   return makeFourKeyChord(chord, destTone, 4, 3, 4, higherOctave);
 }
@@ -298,6 +302,7 @@ void populateScale(Chord** scale, Semitone semitone, int pitch) {
     std::string dimLabel = base->label;
     std::string augLabel = base->label;
 
+    sevenLabel += "7";
     sus2Label += "sus2";
     sus4Label += "sus4";
     dimLabel += "dim";
@@ -306,19 +311,18 @@ void populateScale(Chord** scale, Semitone semitone, int pitch) {
     switch (chordTypes[i]) {
       case ChordType::MAJOR:
         baseLabel += "maj";
-        sevenLabel += "7";
         majorMinorLabel += "min";
-        major7Minor7Label += "min7";
-        major9Minor9Label += "min9";
+        major7Minor7Label += "maj7";
+        major9Minor9Label += "maj9";
 
         scale[i] = makeMajorChord(baseLabel, base->tone, pitch);
-        scale[i]->seven = makeMajor7Chord(sevenLabel, base->tone, pitch);
+        scale[i]->seven = make7Chord(sevenLabel, base->tone, pitch);
         scale[i]->major_minor =
             makeMinorChord(majorMinorLabel, base->tone, pitch);
         scale[i]->major7_minor7 =
-            makeMinor7Chord(major7Minor7Label, base->tone, pitch);
+            makeMajor7Chord(major7Minor7Label, base->tone, pitch);
         scale[i]->major9_minor9 =
-            makeMinor9Chord(major9Minor9Label, base->tone, pitch);
+            makeMajor9Chord(major9Minor9Label, base->tone, pitch);
         scale[i]->sus2 = makeSus2Chord(sus2Label, base->tone, pitch);
         scale[i]->sus4 = makeSus4Chord(sus4Label, base->tone, pitch);
         scale[i]->dim = makeDimChord(dimLabel, base->tone, pitch);
@@ -326,19 +330,18 @@ void populateScale(Chord** scale, Semitone semitone, int pitch) {
         break;
       case ChordType::MINOR:
         baseLabel += "min";
-        sevenLabel += "min7";
         majorMinorLabel += "maj";
-        major7Minor7Label += "maj7";
-        major9Minor9Label += "maj9";
+        major7Minor7Label += "min7";
+        major9Minor9Label += "min9";
 
         scale[i] = makeMinorChord(baseLabel, base->tone, pitch);
-        scale[i]->seven = makeMinor7Chord(sevenLabel, base->tone, pitch);
+        scale[i]->seven = make7Chord(sevenLabel, base->tone, pitch);
         scale[i]->major_minor =
             makeMajorChord(majorMinorLabel, base->tone, pitch);
         scale[i]->major7_minor7 =
-            makeMajor7Chord(major7Minor7Label, base->tone, pitch);
+            makeMinor7Chord(major7Minor7Label, base->tone, pitch);
         scale[i]->major9_minor9 =
-            makeMajor9Chord(major9Minor9Label, base->tone, pitch);
+            makeMinor9Chord(major9Minor9Label, base->tone, pitch);
         scale[i]->sus2 = makeSus2Chord(sus2Label, base->tone, pitch);
         scale[i]->sus4 = makeSus4Chord(sus4Label, base->tone, pitch);
         scale[i]->dim = makeDimChord(dimLabel, base->tone, pitch);
