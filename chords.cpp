@@ -1,6 +1,6 @@
 #include "chords.h"
 
-const double A_3_BASE_FREQ = 220.00;
+const float A_3_BASE_FREQ = 220.00;
 
 SemitoneListItem* firstSemitone;
 SemitoneListItem* baseSemitone;

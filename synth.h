@@ -19,8 +19,8 @@ typedef enum {
 
 // Options for Attack, Decay, Sustain, Release
 int ADSROptions[4][4] = {
-    {100, 200, 500, 200},   // SHORT
-    {1000, 100, 300, 400},  // SWELL
+    {100, 100, 500, 400},   // SHORT
+    {1000, 100, 300, 600},  // SWELL
     {100, 300, 500, 1000},  // LONG
     {0, 0, 0, 0},           // SUSTAIN - ignore ADSR
 };
@@ -36,7 +36,7 @@ Maximilian maximilian(out);
 
 // TODO: handle clock
 // maxiClock myClock;
-maxiOsc osc[5], base, lfo;
+maxiOsc osc[5], oscPitch[2], lfo;
 maxiFilter hipass, lowpass;
 maxiEnv envelope;
 

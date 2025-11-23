@@ -91,17 +91,16 @@ void setup() {
 }
 
 void playArpeggio(float* output, Chord* chord) {
-  double adsr = envelope.adsr(1., !keyReleased);
+  float adsr = envelope.adsr(1., !keyReleased);
 
-  double single = osc[currentNote].sawn(chord->frequencies[currentNote]);
-  double filtered = lowpass.lores(single, adsr * 1500, 0.8);  // Low-pass filter
+  float single = osc[currentNote].sawn(chord->frequencies[currentNote]);
+  float filtered = lowpass.lores(single, adsr * 1500, 0.8);  // Low-pass filter
 
   output[0] = output[1] = filtered * adsr;
 }
 
 void playChord(float* output, Chord* chord) {
-  double out = 0;
-  double adsr;
+  float out = 0.0, adsr;
 
   if (adsrOption == ADSR_OPTION::SUSTAIN) {
     adsr = 1.0;
@@ -111,22 +110,22 @@ void playChord(float* output, Chord* chord) {
     adsr = 0.0;
   }
 
-  double baseFreq = chord->frequencies[0] / 2;
-  out += base.sawn(baseFreq);
+  float bottomFreq = chord->frequencies[0];
+  float topFreq = chord->frequencies[chord->keys - 1];
 
-  for (int i = 0; i < chord->keys; i++) {
-    if (i == 0) {
-      out += osc[i].sawn(chord->frequencies[i] + lfo.sinebuf(0.2));
-    } else {
-      out += osc[i].sawn(chord->frequencies[i]);
-    }
+  out += osc[0].sawn(chord->frequencies[0] + lfo.sinebuf(0.2));
+  for (int i = 1; i < chord->keys; i++) {
+    out += osc[i].sawn(chord->frequencies[i]);
   }
 
-  out /= chord->keys + 1;
+  out += oscPitch[0].square(chord->frequencies[0] / 2.0f) * 0.25f;
+  out += oscPitch[1].saw(chord->frequencies[0] * 2.0f) * 0.25f;
+
+  out /= chord->keys;
 
   out = lowpass.lores(
-      out, adsr * (chord->frequencies[chord->keys - 1] + filterCutoff), 1.0);
-  out = hipass.hires(out, adsr * (baseFreq - filterCutoff), 1.0);
+      out, adsr * (topFreq + filterCutoff), 1.0);
+  out = hipass.hires(out, adsr * (bottomFreq - filterCutoff), 1.0);
 
   output[0] = output[1] = out * adsr;
 }
