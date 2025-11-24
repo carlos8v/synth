@@ -88,6 +88,8 @@ void setup() {
   displayInfo.filterCutoff = filterCutoff;
 
   display.initConfig(displayInfo);
+
+  clickEffect.setSample(click_vector);
 }
 
 void playArpeggio(float* output, Chord* chord) {
@@ -127,7 +129,8 @@ void playChord(float* output, Chord* chord) {
       out, adsr * (topFreq + filterCutoff), 1.0);
   out = hipass.hires(out, adsr * (bottomFreq - filterCutoff), 1.0);
 
-  output[0] = output[1] = out * adsr;
+  output[0] += out * adsr;
+  output[1] = output[0];
 }
 
 void play(float* output) {
@@ -138,6 +141,14 @@ void play(float* output) {
   //   // For arpeggios
   //   currentNote = (currentNote + 1) % 3;  // Cycle through notes 0–3
   // }
+
+  // Trigger sound effects
+  if (soundEffect) {
+    soundEffect = 0;
+    clickEffect.trigger();
+  }
+
+  output[0] = output[1] = clickEffect.playOnce();
 
   if (lastChordIdx >= 0) {
     // Sustain chord
@@ -217,8 +228,6 @@ void checkKeyModifier() {
 }
 
 void playMode() {
-  maximilian.copy();  // Call the audio processing callback
-
   checkKeyPress();
   checkKeyModifier();
 
@@ -257,7 +266,7 @@ void menuMode() {
       menuIdx = (menuIdx + 1) % MAX_MENU_ITEMS;
     }
 
-    delay(150);
+    soundEffect = 1; // Trigger sound effect
 
     // Handle menu option change
   } else if (axisPosition == AxisPosition::AXIS_LEFT ||
@@ -339,6 +348,8 @@ void menuMode() {
 }
 
 void loop() {
+  maximilian.copy();  // Call the audio processing callback
+
   switch (currentMode) {
     case SynthMode::PLAY_MODE:
       playMode();

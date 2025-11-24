@@ -6,6 +6,7 @@
 #include "axis.h"
 #include "chords.h"
 #include "config.h"
+#include "audio/click.h"
 #include "display.h"
 
 #define MAX_ADSR 4
@@ -39,9 +40,11 @@ Maximilian maximilian(out);
 maxiOsc osc[5], oscPitch[2], lfo;
 maxiFilter hipass, lowpass;
 maxiEnv envelope;
+maxiSample clickEffect;
 
 SynthMode currentMode = SynthMode::PLAY_MODE;
 
+int soundEffect = 0;
 int menuIdx = 0;
 int adsrOption = ADSR_OPTION::LONG;
 int pitch = 0;
