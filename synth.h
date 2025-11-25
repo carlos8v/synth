@@ -3,13 +3,14 @@
 
 #include "AudioTools.h"
 #include "AudioTools/AudioLibs/MaximilianDSP.h"
+#include "audio/click.h"
 #include "axis.h"
 #include "chords.h"
 #include "config.h"
-#include "audio/click.h"
 #include "display.h"
 
 #define MAX_ADSR 4
+#define MAX_SCALE 2
 
 typedef enum {
   SHORT = 0,
@@ -48,6 +49,7 @@ int soundEffect = 0;
 int menuIdx = 0;
 int adsrOption = ADSR_OPTION::LONG;
 int pitch = 0;
+int scaleOption = 0;
 int filterCutoff = 200;
 
 Axis axis(MOD_MAX_X, MOD_MAX_Y);

@@ -1,5 +1,12 @@
 #include "display.h"
 
+char menuLabels[MAX_MENU_ITEMS][10] = {
+    "Keynote", "Pitch", "Scale", "ADSR", "Filter",
+};
+
+String ADSRLabels[4] = {"Short", "Swell", "Long", "Sustain"};
+String scaleLabels[2] = {"Major", "Minor"};
+
 Display::Display(Adafruit_SSD1306* _screen) {
   shouldDraw = true;
   screen = _screen;
@@ -33,7 +40,8 @@ void Display::mainScreen(DisplayInfo displayInfo) {
 
     // Base key
     screen->setTextSize(1);
-    screen->setCursor(width - (TEXT_WIDTH * 3), 0);
+    screen->setCursor(width - (TEXT_WIDTH * 10), 0);
+    screen->printf("[%.*s] ", 3, scaleLabels[displayInfo.scale]);
     screen->print(displayInfo.baseKey);
 
     // Out mode icon
@@ -92,15 +100,6 @@ void Display::mainScreen(DisplayInfo displayInfo) {
   }
 }
 
-char menuLabels[MAX_MENU_ITEMS][10] = {
-    "Keynote",
-    "Pitch",
-    "ADSR",
-    "Filter",
-};
-
-String ADSRLabels[4] = {"Short", "Swell", "Long", "Sustain"};
-
 void Display::menuScreen(DisplayInfo displayInfo) {
   // Update last info
   lastInfo.mode = displayInfo.mode;
@@ -132,22 +131,32 @@ void Display::menuScreen(DisplayInfo displayInfo) {
   screen->print(menuLabels[nextIdx]);
 
   // Keynote
-  if (displayInfo.menuIdx == 0) {
+  if (displayInfo.menuIdx == MenuOption::MENU_KEYNOTE) {
     screen->setCursor(100, 28);
     screen->print(displayInfo.baseKey);
     screen->drawBitmap(94, 28, arrow_left_bmp, 5, 7, 1);
     screen->drawBitmap(113, 28, arrow_right_bmp, 5, 7, 1);
 
     // Pitch
-  } else if (displayInfo.menuIdx == 1) {
+  } else if (displayInfo.menuIdx == MenuOption::MENU_PITCH) {
     screen->setCursor(100, 28);
     screen->print(String(displayInfo.pitch >= 0 ? '+' : '-') +
                   String(abs(displayInfo.pitch)));
     screen->drawBitmap(94, 28, arrow_left_bmp, 5, 7, 1);
     screen->drawBitmap(113, 28, arrow_right_bmp, 5, 7, 1);
 
+    // Scale
+  } else if (displayInfo.menuIdx == MenuOption::MENU_SCALE) {
+    int len = scaleLabels[displayInfo.scale].length();
+    int scaleX = 113 - (len * TEXT_WIDTH) - (len + 1);
+
+    screen->setCursor(scaleX, 28);
+    screen->print(scaleLabels[displayInfo.scale]);
+    screen->drawBitmap(scaleX - 6, 28, arrow_left_bmp, 5, 7, 1);
+    screen->drawBitmap(113, 28, arrow_right_bmp, 5, 7, 1);
+
     // ADSR
-  } else if (displayInfo.menuIdx == 2) {
+  } else if (displayInfo.menuIdx == MenuOption::MENU_ADSR) {
     int len = ADSRLabels[displayInfo.adsr].length();
     int adsrX = 113 - (len * TEXT_WIDTH) - (len + 1);
 
@@ -157,7 +166,7 @@ void Display::menuScreen(DisplayInfo displayInfo) {
     screen->drawBitmap(113, 28, arrow_right_bmp, 5, 7, 1);
 
     // Filter
-  } else if (displayInfo.menuIdx == 3) {
+  } else if (displayInfo.menuIdx == MenuOption::MENU_FILTER) {
     screen->drawRect(90, 28, 20, 7, SSD1306_WHITE);
     screen->fillRect(91, 29, map(displayInfo.filterCutoff, 0, 500, 0, 19), 6,
                      SSD1306_WHITE);

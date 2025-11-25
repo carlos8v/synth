@@ -275,14 +275,24 @@ void freeChord(Chord* chord) {
 }
 
 // Only major scale
-void populateScale(Chord** scale, Semitone semitone, int pitch) {
+void populateScale(Chord** scale, Semitone semitone, int scaleOption,
+                   int pitch) {
   SemitoneListItem* base = firstSemitone;
   getSemitone(&base, semitone);
 
-  ChordType chordTypes[] = {
-      ChordType::MAJOR, ChordType::MINOR, ChordType::MINOR, ChordType::MAJOR,
-      ChordType::MAJOR, ChordType::MINOR, ChordType::DIM};
-  int steps[] = {2, 2, 1, 2, 2, 2, 2};
+  ChordType chordTypes[2][7] = {
+      // Major scale
+      {ChordType::MAJOR, ChordType::MINOR, ChordType::MINOR, ChordType::MAJOR,
+       ChordType::MAJOR, ChordType::MINOR, ChordType::DIM},
+      // Minor scale
+      {ChordType::MINOR, ChordType::DIM, ChordType::MAJOR, ChordType::MINOR,
+       ChordType::MINOR, ChordType::MAJOR, ChordType::MAJOR}};
+
+  // Excluding last one (we don't need to loop through)
+  int steps[2][7] = {
+      {2, 2, 1, 2, 2, 2, 1},  // Major scale
+      {2, 1, 2, 2, 1, 2, 2},  // Minor scale
+  };
 
   for (int i = 0; i < 7; i++) {
     if (scale[i] != NULL) {
@@ -308,7 +318,7 @@ void populateScale(Chord** scale, Semitone semitone, int pitch) {
     dimLabel += "dim";
     augLabel += "aug";
 
-    switch (chordTypes[i]) {
+    switch (chordTypes[scaleOption][i]) {
       case ChordType::MAJOR:
         baseLabel += "maj";
         majorMinorLabel += "min";
@@ -355,12 +365,12 @@ void populateScale(Chord** scale, Semitone semitone, int pitch) {
         break;
     }
 
-    if (base->tone + steps[i] >= 12) {
+    if (base->tone + steps[scaleOption][i] >= 12) {
       pitch++;
     }
 
     if (i < 6) {
-      advanceSemitone(&base, steps[i]);
+      advanceSemitone(&base, steps[scaleOption][i]);
     }
   }
 }

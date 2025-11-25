@@ -84,6 +84,7 @@ void setup() {
 
   displayInfo.menuIdx = 0;
   displayInfo.adsr = adsrOption;
+  displayInfo.scale = scaleOption;
   displayInfo.pitch = pitch;
   displayInfo.filterCutoff = filterCutoff;
 
@@ -120,8 +121,8 @@ void playChord(float* output, Chord* chord) {
     out += osc[i].sawn(chord->frequencies[i]);
   }
 
-  out += oscPitch[0].square(chord->frequencies[0] / 2.0f) * 0.25f;
-  out += oscPitch[1].saw(chord->frequencies[0] * 2.0f) * 0.25f;
+  out += oscPitch[0].square(chord->frequencies[0] / 2.0f) * 0.2f;
+  out += oscPitch[1].saw(chord->frequencies[0] * 2.0f) * 0.2f;
 
   out /= chord->keys;
 
@@ -272,7 +273,7 @@ void menuMode() {
   } else if (axisPosition == AxisPosition::AXIS_LEFT ||
              axisPosition == AxisPosition::AXIS_RIGHT) {
     // Keynote
-    if (keyReleased && menuIdx == 0) {
+    if (keyReleased && menuIdx == MenuOption::MENU_KEYNOTE) {
       keyReleased = 0;
       if (axisPosition == AxisPosition::AXIS_LEFT) {
         baseKey = getPreviousSemitone(baseKey);
@@ -284,7 +285,7 @@ void menuMode() {
     }
 
     // Pitch
-    if (keyReleased && menuIdx == 1) {
+    if (keyReleased && menuIdx == MenuOption::MENU_PITCH) {
       keyReleased = 0;
       if (axisPosition == AxisPosition::AXIS_LEFT) {
         pitch = max(pitch - 1, -2);
@@ -295,8 +296,26 @@ void menuMode() {
       delay(150);
     }
 
+    // Scale
+    if (keyReleased && menuIdx == MenuOption::MENU_SCALE) {
+      keyReleased = 0;
+      if (axisPosition == AxisPosition::AXIS_LEFT) {
+        scaleOption -= 1;
+        if (scaleOption < 0) {
+          scaleOption = MAX_SCALE - 1;
+        }
+      } else if (axisPosition == AxisPosition::AXIS_RIGHT) {
+        scaleOption += 1;
+        if (scaleOption >= MAX_SCALE) {
+          scaleOption = 0;
+        }
+      }
+
+      delay(150);
+    }
+
     // ADSR
-    if (keyReleased && menuIdx == 2) {
+    if (keyReleased && menuIdx == MenuOption::MENU_ADSR) {
       keyReleased = 0;
       if (axisPosition == AxisPosition::AXIS_LEFT) {
         adsrOption -= 1;
@@ -320,7 +339,7 @@ void menuMode() {
     }
 
     // Filter
-    if (menuIdx == 3) {
+    if (menuIdx == MenuOption::MENU_FILTER) {
       if (axisPosition == AxisPosition::AXIS_LEFT) {
         filterCutoff = max(filterCutoff - 10, 0);
       } else if (axisPosition == AxisPosition::AXIS_RIGHT) {
@@ -339,7 +358,7 @@ void menuMode() {
 
   if (modPressed && modReleased) {
     modReleased = 0;
-    populateScale(scale, baseKey, pitch);
+    populateScale(scale, baseKey, scaleOption, pitch);
     delay(200);
 
     currentMode = SynthMode::PLAY_MODE;
@@ -371,6 +390,7 @@ void loop() {
     displayInfo.menuIdx = menuIdx;
     displayInfo.adsr = adsrOption;
     displayInfo.pitch = pitch;
+    displayInfo.scale = scaleOption;
     displayInfo.filterCutoff = filterCutoff;
 
     xSemaphoreGive(mutex_display);
