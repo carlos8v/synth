@@ -1,5 +1,65 @@
 #include "synth.h"
 
+/**
+ * CRC8 simple calculation
+ * Based on https://github.com/PaulStoffregen/OneWire/blob/master/OneWire.cpp
+ */
+uint8_t crc8(const uint8_t* addr, uint8_t len) {
+  uint8_t crc = 0;
+
+  while (len--) {
+    uint8_t inbyte = *addr++;
+    for (uint8_t i = 8; i; i--) {
+      uint8_t mix = (crc ^ inbyte) & 0x01;
+      crc >>= 1;
+      if (mix) crc ^= 0x8C;
+      inbyte >>= 1;
+    }
+  }
+  return crc;
+}
+
+void saveSettings() {
+  uint8_t buffer[sizeof(SynthSettings) + 1];  // Use the last byte for CRC
+
+  memcpy(buffer, &settings, sizeof(settings));
+  buffer[sizeof(settings)] = crc8(buffer, sizeof(settings));
+
+  for (int i = 0; i < sizeof(buffer); i++) {
+    EEPROM.write(i, buffer[i]);
+  }
+
+  EEPROM.commit();
+}
+
+void loadSettings() {
+  uint8_t buffer[sizeof(settings) + 1];  // Use the last byte for CRC
+
+  for (int i = 0; i < sizeof(buffer); i++) {
+    buffer[i] = uint8_t(EEPROM.read(i));
+  }
+
+  // Check CRC
+  if (crc8(buffer, sizeof(settings)) == buffer[sizeof(settings)]) {
+    memcpy(&settings, buffer, sizeof(settings));
+    return;
+  }
+
+  Serial.println("Bad CRC, loading default settings");
+  // Initialize with default values in case of settings not written
+
+  settings.mode = SynthMode::PLAY_MODE;
+  settings.baseKey = Semitone::C;
+  settings.lastChord = 0;
+
+  settings.menuIdx = 0;
+  settings.adsr = ADSR_OPTION::LONG;
+  settings.pitch = 0;
+  settings.scale = 0;
+  settings.filterCutoff = 200;
+  saveSettings();
+}
+
 void displayScreen(void* parameter) {
   for (;;) {
     // Acquire mutex before accessing the shared buffer
@@ -22,6 +82,7 @@ void displayScreen(void* parameter) {
 }
 
 void setup() {
+  EEPROM.begin(64);
   Serial.begin(115200);
 
   Wire.setPins(DISPLAY_SDA, DISPLAY_SCL);
@@ -31,6 +92,8 @@ void setup() {
     Serial.println("SSD1306 allocation failed");
     for (;;);
   }
+
+  loadSettings();
 
   // Create the mutex for shared buffer access
   mutex_display = xSemaphoreCreateMutex();
@@ -54,10 +117,10 @@ void setup() {
   // myClock.setTicksPerBeat(4);
   // myClock.setTempo(120);
 
-  envelope.setAttack(ADSROptions[adsrOption][0]);
-  envelope.setDecay(ADSROptions[adsrOption][1]);
-  envelope.setSustain(ADSROptions[adsrOption][2]);
-  envelope.setRelease(ADSROptions[adsrOption][3]);
+  envelope.setAttack(ADSROptions[settings.adsr][0]);
+  envelope.setDecay(ADSROptions[settings.adsr][1]);
+  envelope.setSustain(ADSROptions[settings.adsr][2]);
+  envelope.setRelease(ADSROptions[settings.adsr][3]);
 
   auto cfg = out.defaultConfig(TX_MODE);
   cfg.is_master = true;       // ESP32 generates the clock
@@ -74,19 +137,19 @@ void setup() {
 
   // Initialize chords references
   setupChords();
-  populateScale(scale, baseKey, pitch);
-  chordToPlay = scale[0];
+  populateScale(scale, settings.baseKey, settings.pitch);
+  chordToPlay = scale[settings.lastChord];
 
   // Initial display config
-  displayInfo.mode = currentMode;
-  displayInfo.baseKey = String(getSemitoneLabel(baseKey).c_str());
+  displayInfo.mode = settings.mode;
+  displayInfo.baseKey = String(getSemitoneLabel(settings.baseKey).c_str());
   displayInfo.chord = String(chordToPlay->chord);
 
-  displayInfo.menuIdx = 0;
-  displayInfo.adsr = adsrOption;
-  displayInfo.scale = scaleOption;
-  displayInfo.pitch = pitch;
-  displayInfo.filterCutoff = filterCutoff;
+  displayInfo.menuIdx = settings.menuIdx;
+  displayInfo.adsr = settings.adsr;
+  displayInfo.scale = settings.scale;
+  displayInfo.pitch = settings.pitch;
+  displayInfo.filterCutoff = settings.filterCutoff;
 
   display.initConfig(displayInfo);
 
@@ -105,9 +168,9 @@ void playArpeggio(float* output, Chord* chord) {
 void playChord(float* output, Chord* chord) {
   float out = 0.0, adsr;
 
-  if (adsrOption == ADSR_OPTION::SUSTAIN) {
+  if (settings.adsr == ADSR_OPTION::SUSTAIN) {
     adsr = 1.0;
-  } else if (currentMode == SynthMode::PLAY_MODE) {
+  } else if (settings.mode == SynthMode::PLAY_MODE) {
     adsr = envelope.adsr(1.0, !keyReleased);
   } else {
     adsr = 0.0;
@@ -126,9 +189,8 @@ void playChord(float* output, Chord* chord) {
 
   out /= chord->keys;
 
-  out = lowpass.lores(
-      out, adsr * (topFreq + filterCutoff), 1.0);
-  out = hipass.hires(out, adsr * (bottomFreq - filterCutoff), 1.0);
+  out = lowpass.lores(out, adsr * (topFreq + settings.filterCutoff), 1.0);
+  out = hipass.hires(out, adsr * (bottomFreq - settings.filterCutoff), 1.0);
 
   output[0] += out * adsr;
   output[1] = output[0];
@@ -151,7 +213,7 @@ void play(float* output) {
 
   output[0] = output[1] = clickEffect.playOnce();
 
-  if (lastChordIdx >= 0) {
+  if (settings.lastChord >= 0) {
     // Sustain chord
     playChord(output, chordToPlay);
   }
@@ -172,7 +234,7 @@ void checkKeyPress() {
 
     // First pressed key *or
     // Maintaining the same pressed key
-    if (keyReleased || (!keyReleased && lastChordIdx == idx)) {
+    if (keyReleased || (!keyReleased && settings.lastChord == idx)) {
       pressedIdx = idx;
       break;
     }
@@ -180,7 +242,7 @@ void checkKeyPress() {
 
   if (keyReleased && pressedIdx >= 0) {
     keyReleased = 0;
-    lastChordIdx = pressedIdx;
+    settings.lastChord = pressedIdx;
   }
 
   if (pressedIdx < 0) {
@@ -195,36 +257,36 @@ void checkKeyModifier() {
 
   switch (axisPosition) {
     case AxisPosition::AXIS_UP:
-      chordToPlay = scale[lastChordIdx]->major_minor;
+      chordToPlay = scale[settings.lastChord]->major_minor;
       break;
     case AxisPosition::AXIS_UP_RIGHT:
-      chordToPlay = scale[lastChordIdx]->seven;
+      chordToPlay = scale[settings.lastChord]->seven;
       break;
     case AxisPosition::AXIS_RIGHT:
-      chordToPlay = scale[lastChordIdx]->major7_minor7;
+      chordToPlay = scale[settings.lastChord]->major7_minor7;
       break;
     case AxisPosition::AXIS_DOWN_RIGHT:
-      chordToPlay = scale[lastChordIdx]->major9_minor9;
+      chordToPlay = scale[settings.lastChord]->major9_minor9;
       break;
     case AxisPosition::AXIS_DOWN:
-      chordToPlay = scale[lastChordIdx]->sus4;
+      chordToPlay = scale[settings.lastChord]->sus4;
       break;
     case AxisPosition::AXIS_DOWN_LEFT:
-      chordToPlay = scale[lastChordIdx]->sus2;
+      chordToPlay = scale[settings.lastChord]->sus2;
       break;
     case AxisPosition::AXIS_LEFT:
-      chordToPlay = scale[lastChordIdx]->dim;
+      chordToPlay = scale[settings.lastChord]->dim;
       break;
     case AxisPosition::AXIS_UP_LEFT:
-      chordToPlay = scale[lastChordIdx]->aug;
+      chordToPlay = scale[settings.lastChord]->aug;
       break;
     default:
-      chordToPlay = scale[lastChordIdx];
+      chordToPlay = scale[settings.lastChord];
       break;
   }
 
   if (chordToPlay == NULL) {
-    chordToPlay = scale[lastChordIdx];
+    chordToPlay = scale[settings.lastChord];
   }
 }
 
@@ -238,8 +300,7 @@ void playMode() {
   }
 
   if (modPressed && modReleased) {
-    lastChordIdx = 0;
-    currentMode = SynthMode::MENU_MODE;
+    settings.mode = SynthMode::MENU_MODE;
     modReleased = 0;
     delay(200);
   }
@@ -262,52 +323,53 @@ void menuMode() {
     keyReleased = 0;
 
     if (axisPosition == AxisPosition::AXIS_UP) {
-      menuIdx = menuIdx - 1 >= 0 ? (menuIdx - 1) : MAX_MENU_ITEMS - 1;
+      settings.menuIdx = settings.menuIdx - 1 >= 0 ? (settings.menuIdx - 1)
+                                                   : MAX_MENU_ITEMS - 1;
     } else if (axisPosition == AxisPosition::AXIS_DOWN) {
-      menuIdx = (menuIdx + 1) % MAX_MENU_ITEMS;
+      settings.menuIdx = (settings.menuIdx + 1) % MAX_MENU_ITEMS;
     }
 
-    soundEffect = 1; // Trigger sound effect
+    soundEffect = 1;  // Trigger sound effect
 
     // Handle menu option change
   } else if (axisPosition == AxisPosition::AXIS_LEFT ||
              axisPosition == AxisPosition::AXIS_RIGHT) {
     // Keynote
-    if (keyReleased && menuIdx == MenuOption::MENU_KEYNOTE) {
+    if (keyReleased && settings.menuIdx == MenuOption::MENU_KEYNOTE) {
       keyReleased = 0;
       if (axisPosition == AxisPosition::AXIS_LEFT) {
-        baseKey = getPreviousSemitone(baseKey);
+        settings.baseKey = getPreviousSemitone(settings.baseKey);
       } else if (axisPosition == AxisPosition::AXIS_RIGHT) {
-        baseKey = getNextSemitone(baseKey);
+        settings.baseKey = getNextSemitone(settings.baseKey);
       }
 
       delay(150);
     }
 
     // Pitch
-    if (keyReleased && menuIdx == MenuOption::MENU_PITCH) {
+    if (keyReleased && settings.menuIdx == MenuOption::MENU_PITCH) {
       keyReleased = 0;
       if (axisPosition == AxisPosition::AXIS_LEFT) {
-        pitch = max(pitch - 1, -2);
+        settings.pitch = max(settings.pitch - 1, -2);
       } else if (axisPosition == AxisPosition::AXIS_RIGHT) {
-        pitch = min(pitch + 1, 2);
+        settings.pitch = min(settings.pitch + 1, 2);
       }
 
       delay(150);
     }
 
     // Scale
-    if (keyReleased && menuIdx == MenuOption::MENU_SCALE) {
+    if (keyReleased && settings.menuIdx == MenuOption::MENU_SCALE) {
       keyReleased = 0;
       if (axisPosition == AxisPosition::AXIS_LEFT) {
-        scaleOption -= 1;
-        if (scaleOption < 0) {
-          scaleOption = MAX_SCALE - 1;
+        settings.scale -= 1;
+        if (settings.scale < 0) {
+          settings.scale = MAX_SCALE - 1;
         }
       } else if (axisPosition == AxisPosition::AXIS_RIGHT) {
-        scaleOption += 1;
-        if (scaleOption >= MAX_SCALE) {
-          scaleOption = 0;
+        settings.scale += 1;
+        if (settings.scale >= MAX_SCALE) {
+          settings.scale = 0;
         }
       }
 
@@ -315,35 +377,35 @@ void menuMode() {
     }
 
     // ADSR
-    if (keyReleased && menuIdx == MenuOption::MENU_ADSR) {
+    if (keyReleased && settings.menuIdx == MenuOption::MENU_ADSR) {
       keyReleased = 0;
       if (axisPosition == AxisPosition::AXIS_LEFT) {
-        adsrOption -= 1;
-        if (adsrOption < 0) {
-          adsrOption = ADSR_OPTION::SUSTAIN;
+        settings.adsr -= 1;
+        if (settings.adsr < 0) {
+          settings.adsr = ADSR_OPTION::SUSTAIN;
         }
 
       } else if (axisPosition == AxisPosition::AXIS_RIGHT) {
-        adsrOption += 1;
-        if (adsrOption >= MAX_ADSR) {
-          adsrOption = ADSR_OPTION::SHORT;
+        settings.adsr += 1;
+        if (settings.adsr >= MAX_ADSR) {
+          settings.adsr = ADSR_OPTION::SHORT;
         }
       }
 
-      envelope.setAttack(ADSROptions[adsrOption][0]);
-      envelope.setDecay(ADSROptions[adsrOption][1]);
-      envelope.setSustain(ADSROptions[adsrOption][2]);
-      envelope.setRelease(ADSROptions[adsrOption][3]);
+      envelope.setAttack(ADSROptions[settings.adsr][0]);
+      envelope.setDecay(ADSROptions[settings.adsr][1]);
+      envelope.setSustain(ADSROptions[settings.adsr][2]);
+      envelope.setRelease(ADSROptions[settings.adsr][3]);
 
       delay(150);
     }
 
     // Filter
-    if (menuIdx == MenuOption::MENU_FILTER) {
+    if (settings.menuIdx == MenuOption::MENU_FILTER) {
       if (axisPosition == AxisPosition::AXIS_LEFT) {
-        filterCutoff = max(filterCutoff - 10, 0);
+        settings.filterCutoff = max(settings.filterCutoff - 10, 0);
       } else if (axisPosition == AxisPosition::AXIS_RIGHT) {
-        filterCutoff = min(filterCutoff + 10, 500);
+        settings.filterCutoff = min(settings.filterCutoff + 10, 500);
       }
 
       delay(50);
@@ -358,18 +420,19 @@ void menuMode() {
 
   if (modPressed && modReleased) {
     modReleased = 0;
-    populateScale(scale, baseKey, scaleOption, pitch);
+    populateScale(scale, settings.baseKey, settings.scale, settings.pitch);
     delay(200);
 
-    currentMode = SynthMode::PLAY_MODE;
-    chordToPlay = scale[0];
+    settings.mode = SynthMode::PLAY_MODE;
+    chordToPlay = scale[settings.lastChord];
+    saveSettings();
   }
 }
 
 void loop() {
   maximilian.copy();  // Call the audio processing callback
 
-  switch (currentMode) {
+  switch (settings.mode) {
     case SynthMode::PLAY_MODE:
       playMode();
       break;
@@ -381,17 +444,17 @@ void loop() {
 
   // Update the shared buffer safely
   if (xSemaphoreTake(mutex_display, portMAX_DELAY) == pdTRUE) {
-    displayInfo.mode = currentMode;
-    displayInfo.outMode = digitalRead(OUT_MODE_PIN) == LOW ? OutMode::LINE_OUT
-                                                           : OutMode::SPEAKERS;
-    displayInfo.baseKey = String(getSemitoneLabel(baseKey).c_str());
+    displayInfo.mode = settings.mode;
+    displayInfo.outMode = digitalRead(OUT_MODE_PIN) == LOW ? OutMode::SPEAKERS
+                                                           : OutMode::LINE_OUT;
+    displayInfo.baseKey = String(getSemitoneLabel(settings.baseKey).c_str());
     displayInfo.chord = String(chordToPlay->chord);
 
-    displayInfo.menuIdx = menuIdx;
-    displayInfo.adsr = adsrOption;
-    displayInfo.pitch = pitch;
-    displayInfo.scale = scaleOption;
-    displayInfo.filterCutoff = filterCutoff;
+    displayInfo.menuIdx = settings.menuIdx;
+    displayInfo.adsr = settings.adsr;
+    displayInfo.pitch = settings.pitch;
+    displayInfo.scale = settings.scale;
+    displayInfo.filterCutoff = settings.filterCutoff;
 
     xSemaphoreGive(mutex_display);
   }

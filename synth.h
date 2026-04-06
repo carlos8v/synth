@@ -1,6 +1,8 @@
 #ifndef MAIN_H
 #define MAIN_H
 
+#include <EEPROM.h>
+
 #include "AudioTools.h"
 #include "AudioTools/AudioLibs/MaximilianDSP.h"
 #include "audio/click.h"
@@ -43,24 +45,28 @@ maxiFilter hipass, lowpass;
 maxiEnv envelope;
 maxiSample clickEffect;
 
-SynthMode currentMode = SynthMode::PLAY_MODE;
+typedef struct SynthSettings {
+  SynthMode mode;
+  Semitone baseKey;
+  int lastChord;
+
+  int menuIdx;
+  int adsr;
+  int pitch;
+  int scale;
+  int filterCutoff;
+} SynthSettings;
+SynthSettings settings;
 
 int soundEffect = 0;
-int menuIdx = 0;
-int adsrOption = ADSR_OPTION::LONG;
-int pitch = 0;
-int scaleOption = 0;
-int filterCutoff = 200;
 
 Axis axis(MOD_MAX_X, MOD_MAX_Y);
 int modReleased = 1;
 
 int keyNotes[] = {0, 0, 0, 0, 0, 0, 0};
-int lastChordIdx = 0;
 int currentNote = 0;
 int keyReleased = 1;
 
-Semitone baseKey = Semitone::C;
 Chord* scale[7] = {NULL, NULL, NULL, NULL, NULL, NULL, NULL};
 Chord* chordToPlay = NULL;
 
