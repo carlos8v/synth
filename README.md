@@ -4,7 +4,7 @@ Criar um sintetizador simples e portátil.
 
 ### Metas
 
-- [x] Gerar sons na escala maior
+- [x] Gerar sons na escala maior/menor
 - [x] Adicionar modificadores de nota
 - [x] Enviar sons por amplificador e line-out
 - [x] Exibir no display as notas tocadas
@@ -22,7 +22,7 @@ Criar um sintetizador simples e portátil.
 
 ## Funcionalidades
 
-- Ajuste de escala maior
+- Ajuste de escala maior/menor
 - Ajuste de pitch
 - Ajuste de ADSR
 - Ajuste de filtro (lowpass, hipass)
