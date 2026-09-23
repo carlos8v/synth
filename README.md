@@ -6,7 +6,7 @@ Criar um sintetizador simples e portátil.
 
 - [x] Gerar sons na escala maior/menor
 - [x] Adicionar modificadores de nota
-- [x] Enviar sons por amplificador e line-out
+- [x] Enviar sons por line-out
 - [x] Exibir no display as notas tocadas
 
 ## Circuito
@@ -15,8 +15,8 @@ Criar um sintetizador simples e portátil.
 
 ### Bibliotecas
 
-- [Maximilian](https://github.com/pschatzmann/Maximilian)
-- [arduino-audio-tools](https://github.com/pschatzmann/arduino-audio-tools)
+- [Maximilian (A2.4.1)](https://github.com/pschatzmann/Maximilian)
+- [arduino-audio-tools (v1.2.6)](https://github.com/pschatzmann/arduino-audio-tools)
 - [Adafruit_SSD1306](https://github.com/adafruit/Adafruit_SSD1306)
 - [Adafruit-GFX-Library](https://github.com/adafruit/Adafruit-GFX-Library)
 
@@ -48,11 +48,13 @@ Dependendo da direção do analógico o tom do acorde pode mudar:
 - ESP32-WROOM-32D
 - Display OLED 128x64 I2C
 - DAC externo (PCM5102)
-- Amplificador (MAX98357A)
-- Alto falante
 - Analógico
 - Switches/keycaps ou botões
-- Botão switch
+- Botão de ligar/desligar (power switch)
+- Bateria de lítio (1000mAh 3.7v)
+- Módulo de carregamento de bateria (bq25185)
+- Entrada USB tipo C
+- Conector de fone de ouvido
 
 ### Referências/Inspirações
 
