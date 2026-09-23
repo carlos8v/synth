@@ -36,20 +36,28 @@ void Display::mainScreen(DisplayInfo displayInfo) {
     lastInfo.chord = displayInfo.chord;
 
     screen->clearDisplay();
+    screen->fillRect(0, 0, width, 12, SSD1306_WHITE);
+    screen->drawFastHLine(0, 14, width, SSD1306_WHITE);
+    screen->drawFastVLine(0, 14, height, SSD1306_WHITE);
+    screen->drawFastVLine(width - 1, 14, height, SSD1306_WHITE);
+    screen->drawFastHLine(0, height - 1, width, SSD1306_WHITE);
+    screen->setTextColor(SSD1306_BLACK);
+
+    // Lineout icon
+    screen->drawBitmap(0, 1, top_left_lineout_bmp, 10, 10, SSD1306_BLACK);
 
     // Base key
     screen->setTextSize(1);
-    screen->setCursor(width - (TEXT_WIDTH * 10), 0);
+    screen->setCursor(width - (TEXT_WIDTH * 10), 3);
     screen->printf("[%.*s] ", 3, scaleLabels[displayInfo.scale]);
     screen->print(displayInfo.baseKey);
 
-    // Lineout icon
-    screen->drawBitmap(0, 0,top_left_lineout_bmp, 10, 10, 1);
+    screen->setTextColor(SSD1306_WHITE);
 
     // Chord
     int len = displayInfo.chord.length();
     int x = (width / 2) - len * TEXT_WIDTH - (len + 1);
-    int y = (height / 2) - TEXT_HEIGHT;
+    int y = (height / 2) - TEXT_HEIGHT + 5;
 
     screen->setCursor(x, y);
     screen->setTextSize(2);
@@ -66,10 +74,10 @@ void Display::mainScreen(DisplayInfo displayInfo) {
 
     int len = displayInfo.chord.length();
     int x = (width / 2) - len * TEXT_WIDTH - (len + 1);
-    int y = (height / 2) - TEXT_HEIGHT;
+    int y = (height / 2) - TEXT_HEIGHT + 5;
 
     // Clear last chord
-    screen->fillRect(0, y, width, TEXT_HEIGHT * 2 + 2, SSD1306_BLACK);
+    screen->fillRect(1, y, width - 2, TEXT_HEIGHT * 2 + 2, SSD1306_BLACK);
 
     screen->setCursor(x, y);
     screen->setTextSize(2);
