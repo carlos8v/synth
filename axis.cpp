@@ -13,36 +13,36 @@ AxisPosition Axis::getPosition(int newX, int newY) {
     return AxisPosition::AXIS_CENTER;
   }
 
-  if (x > 25 && x < 75 && y >= 75) {
-    return AxisPosition::AXIS_UP;
-  }
-
-  if (x > 25 && x < 75 && y <= 25) {
-    return AxisPosition::AXIS_DOWN;
-  }
-
-  if (y > 25 && y < 75 && x >= 75) {
-    return AxisPosition::AXIS_RIGHT;
-  }
-
-  if (y > 25 && y < 75 && x <= 25) {
-    return AxisPosition::AXIS_LEFT;
-  }
-
-  if (x >= 75 && y >= 75) {
+  if (x >= 65 && y >= 65) {
     return AxisPosition::AXIS_UP_RIGHT;
   }
 
-  if (x >= 75 && y <= 25) {
+  if (x >= 65 && y <= 35) {
     return AxisPosition::AXIS_DOWN_RIGHT;
   }
 
-  if (x <= 25 && y >= 75) {
+  if (x <= 35 && y >= 65) {
     return AxisPosition::AXIS_UP_LEFT;
   }
 
-  if (x <= 25 && y <= 75) {
+  if (x <= 35 && y <= 35) {
     return AxisPosition::AXIS_DOWN_LEFT;
+  }
+
+  if (x >= 35 && x <= 65 && y > 70) {
+    return AxisPosition::AXIS_UP;
+  }
+
+  if (x >= 35 && x <= 65 && y < 30) {
+    return AxisPosition::AXIS_DOWN;
+  }
+
+  if (y >= 35 && y <= 65 && x > 70) {
+    return AxisPosition::AXIS_RIGHT;
+  }
+
+  if (y >= 35 && y <= 65 && x < 30) {
+    return AxisPosition::AXIS_LEFT;
   }
 
   // Error fallback
