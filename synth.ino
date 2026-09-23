@@ -53,7 +53,7 @@ void loadSettings() {
   settings.lastChord = 0;
 
   settings.menuIdx = 0;
-  settings.adsr = ADSR_OPTION::LONG;
+  settings.adsr = ADSR_OPTION::SWELL;
   settings.pitch = 0;
   settings.scale = 0;
   settings.filterCutoff = 200;
@@ -135,7 +135,7 @@ void setup() {
 
   // Initialize chords references
   setupChords();
-  populateScale(scale, settings.baseKey, settings.pitch);
+  populateScale(scale, settings.baseKey, settings.scale, settings.pitch);
   chordToPlay = scale[settings.lastChord];
 
   // Initial display config
@@ -210,12 +210,12 @@ void play(float* output) {
     clickEffect.trigger();
   }
 
-  output[0] = output[1] = clickEffect.playOnce();
-
   if (settings.lastChord >= 0) {
-    // Sustain chord
     playChord(output, chordToPlay);
   }
+
+  output[0] += clickEffect.playOnce();
+  output[1] = output[0];
 }
 
 void checkKeyPress() {
