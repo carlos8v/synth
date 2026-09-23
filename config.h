@@ -1,7 +1,6 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-#define OUT_MODE_PIN 12
 #define DISPLAY_SDA 13
 #define DISPLAY_SCL 14
 #define OLED_RESET -1

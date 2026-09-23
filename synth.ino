@@ -109,9 +109,7 @@ void setup() {
   pinMode(KEY_5_PIN, INPUT_PULLUP);
   pinMode(KEY_6_PIN, INPUT_PULLUP);
   pinMode(KEY_7_PIN, INPUT_PULLUP);
-
   pinMode(MOD_KEY_PIN, INPUT_PULLUP);
-  pinMode(OUT_MODE_PIN, INPUT_PULLUP);
 
   // TODO: handle clock
   // myClock.setTicksPerBeat(4);
@@ -168,7 +166,8 @@ void playArpeggio(float* output, Chord* chord) {
 void playChord(float* output, Chord* chord) {
   float out = 0.0, adsr;
 
-  if (settings.adsr == ADSR_OPTION::SUSTAIN) {
+  // Only sustain during play mode
+  if (settings.adsr == ADSR_OPTION::SUSTAIN && settings.mode == SynthMode::PLAY_MODE) {
     adsr = 1.0;
   } else if (settings.mode == SynthMode::PLAY_MODE) {
     adsr = envelope.adsr(1.0, !keyReleased);
@@ -445,8 +444,6 @@ void loop() {
   // Update the shared buffer safely
   if (xSemaphoreTake(mutex_display, portMAX_DELAY) == pdTRUE) {
     displayInfo.mode = settings.mode;
-    displayInfo.outMode = digitalRead(OUT_MODE_PIN) == LOW ? OutMode::SPEAKERS
-                                                           : OutMode::LINE_OUT;
     displayInfo.baseKey = String(getSemitoneLabel(settings.baseKey).c_str());
     displayInfo.chord = String(chordToPlay->chord);
 

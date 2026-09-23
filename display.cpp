@@ -33,7 +33,6 @@ void Display::mainScreen(DisplayInfo displayInfo) {
   if (shouldDraw || displayInfo.mode != lastInfo.mode) {
     shouldDraw = false;
     lastInfo.mode = displayInfo.mode;
-    lastInfo.outMode = displayInfo.outMode;
     lastInfo.chord = displayInfo.chord;
 
     screen->clearDisplay();
@@ -44,12 +43,8 @@ void Display::mainScreen(DisplayInfo displayInfo) {
     screen->printf("[%.*s] ", 3, scaleLabels[displayInfo.scale]);
     screen->print(displayInfo.baseKey);
 
-    // Out mode icon
-    screen->drawBitmap(0, 0,
-                       displayInfo.outMode == OutMode::LINE_OUT
-                           ? top_left_lineout_bmp
-                           : top_left_speaker_bmp,
-                       10, 10, 1);
+    // Lineout icon
+    screen->drawBitmap(0, 0,top_left_lineout_bmp, 10, 10, 1);
 
     // Chord
     int len = displayInfo.chord.length();
@@ -62,19 +57,6 @@ void Display::mainScreen(DisplayInfo displayInfo) {
 
     screen->display();
     return;
-  }
-
-  // Update only out mode icon
-  if (displayInfo.outMode != lastInfo.outMode) {
-    shouldDraw = 1;
-    lastInfo.outMode = displayInfo.outMode;
-
-    screen->fillRect(0, 0, 10, 10, SSD1306_BLACK);  // Clear last icon
-    screen->drawBitmap(0, 0,
-                       displayInfo.outMode == OutMode::LINE_OUT
-                           ? top_left_lineout_bmp
-                           : top_left_speaker_bmp,
-                       10, 10, 1);
   }
 
   // Update only chord
