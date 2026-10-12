@@ -40,10 +40,13 @@ Maximilian maximilian(out);
 
 // TODO: handle clock
 // maxiClock myClock;
-maxiOsc osc[5], oscPitch[2], lfo;
-maxiFilter hipass, lowpass;
-maxiEnv envelope;
+maxiOsc vco[5], lfo;
+maxiFilter vcf1, vcf2;
+maxiEnv ADSREnv;
 maxiSample clickEffect;
+
+float vcoOut[5];
+float adsrOut, mix;
 
 typedef struct SynthSettings {
   SynthMode mode;

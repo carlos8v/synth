@@ -115,10 +115,10 @@ void setup() {
   // myClock.setTicksPerBeat(4);
   // myClock.setTempo(120);
 
-  envelope.setAttack(ADSROptions[settings.adsr][0]);
-  envelope.setDecay(ADSROptions[settings.adsr][1]);
-  envelope.setSustain(ADSROptions[settings.adsr][2]);
-  envelope.setRelease(ADSROptions[settings.adsr][3]);
+  ADSREnv.setAttack(ADSROptions[settings.adsr][0]);
+  ADSREnv.setDecay(ADSROptions[settings.adsr][1]);
+  ADSREnv.setSustain(ADSROptions[settings.adsr][2]);
+  ADSREnv.setRelease(ADSROptions[settings.adsr][3]);
 
   auto cfg = out.defaultConfig(TX_MODE);
   cfg.is_master = true;       // ESP32 generates the clock
@@ -155,44 +155,37 @@ void setup() {
 }
 
 void playArpeggio(float* output, Chord* chord) {
-  float adsr = envelope.adsr(1., !keyReleased);
+  adsrOut = ADSREnv.adsr(1., !keyReleased);
 
-  float single = osc[currentNote].sawn(chord->frequencies[currentNote]);
-  float filtered = lowpass.lores(single, adsr * 1500, 0.8);  // Low-pass filter
+  float single = vco[currentNote].sawn(chord->frequencies[currentNote]);
+  float filtered = vcf1.lores(single, adsrOut * 1500, 0.8);  // Low-pass filter
 
-  output[0] = output[1] = filtered * adsr;
+  output[0] = output[1] = filtered * adsrOut;
 }
 
 void playChord(float* output, Chord* chord) {
-  float out = 0.0, adsr;
+  mix = 0;
 
   // Only sustain during play mode
   if (settings.adsr == ADSR_OPTION::SUSTAIN && settings.mode == SynthMode::PLAY_MODE) {
-    adsr = 1.0;
+    adsrOut = 1.0;
   } else if (settings.mode == SynthMode::PLAY_MODE) {
-    adsr = envelope.adsr(1.0, !keyReleased);
+    adsrOut = ADSREnv.adsr(1.0, !keyReleased);
   } else {
-    adsr = 0.0;
+    adsrOut = 0.0;
   }
 
-  float bottomFreq = chord->frequencies[0];
-  float topFreq = chord->frequencies[chord->keys - 1];
-
-  out += osc[0].sawn(chord->frequencies[0] + lfo.sinebuf(0.2));
-  for (int i = 1; i < chord->keys; i++) {
-    out += osc[i].sawn(chord->frequencies[i]);
+  for (int i = 0; i < chord->keys; i++) {
+    vcoOut[i] = vco[i].sawn(chord->frequencies[i] + lfo.sinebuf(0.2));
+    mix += vcoOut[i] / chord->keys;
   }
 
-  out += oscPitch[0].square(chord->frequencies[0] / 2.0f) * 0.2f;
-  out += oscPitch[1].saw(chord->frequencies[0] * 2.0f) * 0.2f;
+  mix = vcf1.lores(mix, adsrOut * (chord->frequencies[chord->keys - 1] + settings.filterCutoff), 1.0);
+  mix = vcf2.hires(mix, adsrOut * (chord->frequencies[0] - settings.filterCutoff), 1.0);
 
-  out /= chord->keys;
-
-  out = lowpass.lores(out, adsr * (topFreq + settings.filterCutoff), 1.0);
-  out = hipass.hires(out, adsr * (bottomFreq - settings.filterCutoff), 1.0);
-
-  output[0] += out * adsr;
-  output[1] = output[0];
+  mix = mix * adsrOut * 0.5;
+  output[0] = mix;
+  output[1] = mix;
 }
 
 void play(float* output) {
@@ -391,10 +384,10 @@ void menuMode() {
         }
       }
 
-      envelope.setAttack(ADSROptions[settings.adsr][0]);
-      envelope.setDecay(ADSROptions[settings.adsr][1]);
-      envelope.setSustain(ADSROptions[settings.adsr][2]);
-      envelope.setRelease(ADSROptions[settings.adsr][3]);
+      ADSREnv.setAttack(ADSROptions[settings.adsr][0]);
+      ADSREnv.setDecay(ADSROptions[settings.adsr][1]);
+      ADSREnv.setSustain(ADSROptions[settings.adsr][2]);
+      ADSREnv.setRelease(ADSROptions[settings.adsr][3]);
 
       delay(150);
     }
